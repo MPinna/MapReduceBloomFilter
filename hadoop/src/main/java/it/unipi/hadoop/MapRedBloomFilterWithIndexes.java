@@ -91,28 +91,39 @@ public class MapRedBloomFilterWithIndexes
         }
     }
 
-    public static class MapRedBloomFilterReducer extends Reducer<IntWritable,List<IntWritable>,NullWritable,BloomFilter> { // change parameters type
+    public static class MapRedBloomFilterReducer extends Reducer<IntWritable,ArrayPrimitiveWritable,NullWritable,BloomFilter> {
 
-        //TODO add setup and clean for classes
+        //TODO add clean for classes
+        private int k;
+        private int m;
+        private float p;
 
-        public void reduce(final IntWritable key, final Iterable<List<IntWritable>> values, final Context context)
+
+        public void setup(Context context) throws IOException, InterruptedException
+        {
+            // Set parameters (from job configiguration)
+            k = context.getConfiguration().getInt("k_param", 5);
+            m = context.getConfiguration().getInt("m_param", 1000000);
+            p = context.getConfiguration().getFloat("p_param", (float) 0.001);
+
+        }
+
+        public void reduce(final IntWritable key, final Iterable<ArrayPrimitiveWritable> values, final Context context)
                 throws IOException, InterruptedException {
                     //Create BloomFilter for the given rating
                     int rating = key.get();
-                    int m = 2000; //Hardcoded for now
-                    int k = 3; //Hardcoded for now
-                    float p = 0.01; //Hardcoded for now
-
-                    BloomFilter bloomfilter = new BloomFilter(rating, m, k, p);
-                    
+                    BloomFilter bloomFilter = new BloomFilter(rating, m, k, p);
+                   
                     //Add indexes
-                    for(List<IntWritable> value: values){
-                        for(IntWritable index: value){
-                            bloomfilter.setAt(index.get());
+                    for(ArrayPrimitiveWritable value: values){
+                        int[] indexes = (int[]) value.get();
+
+                        for(int i=0; i<indexes.length; i++){
+                            bloomFilter.setAt(indexes[i]);
                         }
                     }
 
-                    context.write(null, bloomfilter);
+                    context.write(null, bloomFilter);
         }
     }
 
@@ -125,7 +136,7 @@ public class MapRedBloomFilterWithIndexes
 
         String[] otherArgs = new GenericOptionsParser(conf, args).getRemainingArgs();
         if (otherArgs.length != 2) {
-           System.err.println("Usage: MatrixMultiplication <input> <output>");
+           System.err.println("Usage: BloomFilter <input> <output>");
            System.exit(1);
         }
         System.out.println("args[0]: <input>="  + otherArgs[0]);

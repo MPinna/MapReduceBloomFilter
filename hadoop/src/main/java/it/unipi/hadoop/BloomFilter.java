@@ -25,9 +25,9 @@ public class BloomFilter implements Writable {
      * @param rating
      * @param m
      * @param K
-     * @param p
+     * @param p2
      */
-    public BloomFilter(int rating, int m, int K, int p){
+    public BloomFilter(int rating, int m, int K, float p){
         this.rating = rating;
         this.m = m;
         this.K = K;
