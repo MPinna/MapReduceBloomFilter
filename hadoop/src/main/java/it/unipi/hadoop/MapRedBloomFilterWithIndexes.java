@@ -26,14 +26,28 @@ public class MapRedBloomFilterWithIndexes
         }
     }
 
-    public static class MapRedBloomFilterReducer extends Reducer<, , , > { // change parameters type
+    public static class MapRedBloomFilterReducer extends Reducer<IntWritable,List<IntWritable>,NullWritable,BloomFilter> { // change parameters type
 
         //TODO add setup and clean for classes
 
-        public void reduce(final Text key, final Iterable<???> values, final Context context)
+        public void reduce(final IntWritable key, final Iterable<List<IntWritable>> values, final Context context)
                 throws IOException, InterruptedException {
+                    //Create BloomFilter for the given rating
+                    int rating = key.get();
+                    int m = 2000; //Hardcoded for now
+                    int k = 3; //Hardcoded for now
+                    float p = 0.01; //Hardcoded for now
 
-                    //TODO
+                    BloomFilter bloomfilter = new BloomFilter(rating, m, k, p);
+                    
+                    //Add indexes
+                    for(List<IntWritable> value: values){
+                        for(IntWritable index: value){
+                            bloomfilter.setAt(index.get())
+                        }
+                    }
+
+                    context.write(null, bloomfilter)
         }
     }
 
