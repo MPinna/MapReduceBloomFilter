@@ -19,8 +19,6 @@ import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.util.GenericOptionsParser;
 import org.apache.hadoop.util.hash.MurmurHash;
 
-import com.google.common.hash.HashFunction;
-
 public class MapRedBloomFilterWithIndexes
 {
                                                         
@@ -173,6 +171,8 @@ public class MapRedBloomFilterWithIndexes
         //TODO to check
         job.setInputFormatClass(NLineInputFormat.class);
         job.setOutputFormatClass(TextOutputFormat.class);
+        
+        NLineInputFormat.setNumLinesPerSplit(job, 500);
 
         System.exit(job.waitForCompletion(true) ? 0 : 1);
     }
