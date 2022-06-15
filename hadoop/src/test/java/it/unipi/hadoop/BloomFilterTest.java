@@ -1,7 +1,7 @@
 package it.unipi.hadoop;
 
-/*import org.junit.Test;
-import static org.junit.Assert.*;*/
+import org.junit.Test;
+import static org.junit.Assert.*;
 
 public class BloomFilterTest{
     
@@ -14,7 +14,7 @@ public class BloomFilterTest{
 
     private BloomFilter bloomFilter;
 
-    //@Test  
+    @Test  
     public void test() {
         for (int rating = 1; rating < 11; ++rating){
             bloomFilter = new BloomFilter(rating, M, K, P);
@@ -23,8 +23,7 @@ public class BloomFilterTest{
                 bloomFilter.add(String.format("ID_%d", i));
             
             for (int i = 0; i < N_TEST; ++i)
-                //assertTrue(bloomFilter.test(String.format("ID_%d", i)));
-                assert(bloomFilter.test(String.format("ID_%d", i)));
+                assertTrue(bloomFilter.test(String.format("ID_%d", i)));
         }
     }
 }
