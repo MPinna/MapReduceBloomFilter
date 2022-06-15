@@ -15,17 +15,23 @@ public class BloomFilter implements Writable {
     private int m;
     private float P;
     private int K;
-    private final BitSet bitArray;
+    private BitSet bitArray;
 
     // TODO: check if this should actually be static
     private final static MurmurHash murmurHash = (MurmurHash) MurmurHash.getInstance();
+
+
+    // to be used by Shuffle and Sort
+    public BloomFilter(){
+
+    }
 
     /**
      * 
      * @param rating
      * @param m
      * @param K
-     * @param p2
+     * @param p
      */
     public BloomFilter(int rating, int m, int K, float p){
         this.rating = rating;
@@ -35,7 +41,6 @@ public class BloomFilter implements Writable {
 
         this.bitArray = new BitSet(m);
     }
-    
 
     /**
      * 
@@ -44,8 +49,11 @@ public class BloomFilter implements Writable {
     public void add(String movieId){
         for (int i = 0; i < this.K; i++) {
             int index = murmurHash.hash(movieId.getBytes(), movieId.length(), i);
-            //TODO: handle exception
-            bitArray.set(index % m);
+            index %= m;
+            index = Math.abs(index);
+
+            // TODO: handle exception
+            bitArray.set(index);
         }
     }
 
@@ -57,12 +65,14 @@ public class BloomFilter implements Writable {
     public boolean test(String movieId){
         for (int i = 0; i < this.K; i++) {
             int index = murmurHash.hash(movieId.getBytes(), movieId.length(), i);
-            //TODO: handle exception
-            if(!bitArray.get(index % m)){
+            index %= m;
+            index = Math.abs(index);
+
+            // TODO: handle exception
+            if(!bitArray.get(index)){
                 return false;
             }
         }
-
         return true;
     }
 
@@ -81,19 +91,8 @@ public class BloomFilter implements Writable {
         this.bitArray.or(that.bitArray);
     } 
     
-    
-    @Override
-    public void readFields(DataInput in) throws IOException {
-
-        this.rating = in.readInt();
-        this.m = in.readInt();
-        this.P = in.readFloat();
-        this.K = in.readInt();
-
-        byte[] temp = new byte[this.m];
-        in.readFully(temp);
-        // TODO: check exception handling of streams etc.
-        this.bitArray.or(BitSet.valueOf(temp));        
+    public void clear(){
+        this.bitArray.clear();
     }
 
     @Override
@@ -104,8 +103,33 @@ public class BloomFilter implements Writable {
         out.writeFloat(this.P);
         out.writeInt(this.K);
 
+        byte[] serializedBitSet = this.bitArray.toByteArray();
+
         // TODO: check if this causes poor memory perfomance  
-        out.write(this.bitArray.toByteArray());
+        out.writeInt(serializedBitSet.length);
+        out.write(serializedBitSet);
+    }
+    
+    @Override
+    public void readFields(DataInput in) throws IOException {
+
+        this.rating = in.readInt();
+        this.m = in.readInt();
+        this.P = in.readFloat();
+        this.K = in.readInt();
+        int partialBitsetSize = in.readInt();
+        
+        byte[] temp = new byte[partialBitsetSize];
+        in.readFully(temp);
+
+        // byte arrays are automatically filled with zeros by default upon declaration
+        byte[] fullBitSet = new byte[this.m];
+
+        for (int i = 0; i < temp.length; i++) {
+            fullBitSet[i] = temp[i];
+        }
+        
+        this.bitArray = BitSet.valueOf(fullBitSet);
     }
     
 }
