@@ -1,7 +1,6 @@
 package it.unipi.hadoop;
 
 import java.io.IOException;
-import java.util.StringTokenizer;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
@@ -26,19 +25,20 @@ public class MapRedBloomFilterWithIndexes
     {
         // Number of hash functions to be computed
         private static int k;
+        private static int m;
 
         //Reuse writable key and value obj
         private static final IntWritable rate = new IntWritable();
         private static final ArrayPrimitiveWritable hashesValue = new ArrayPrimitiveWritable();
         
         //Utility objs
-        private final static MurmurHash murmurHash = (MurmurHash) MurmurHash.getInstance();
         private static int[] hashValue;
 
         public void setup(Context context) throws IOException, InterruptedException
         {
             // Set parameters (from job configiguration)
             k =  context.getConfiguration().getInt("k_param", 5);
+            m =  context.getConfiguration().getInt("m_param", 1000000);
             // Utility data structure
             hashValue = new int[k];
         }
@@ -73,9 +73,7 @@ public class MapRedBloomFilterWithIndexes
                         }
                         
                         // Compute k hash functions
-                        for (int i = 0; i < k; i++) {
-                            hashValue[i] = murmurHash.hash(movieId.getBytes(), movieId.length(), i);
-                        }
+                        hashValue = BloomFilter.computeHash(k, movieId, m);
 
                         // Compute rounded rating and set Map key
                         rate.set((int)Math.ceil(rawRate));
@@ -171,7 +169,7 @@ public class MapRedBloomFilterWithIndexes
         //TODO to check
         job.setInputFormatClass(NLineInputFormat.class);
         job.setOutputFormatClass(TextOutputFormat.class);
-        
+
         NLineInputFormat.setNumLinesPerSplit(job, 500);
 
         System.exit(job.waitForCompletion(true) ? 0 : 1);
