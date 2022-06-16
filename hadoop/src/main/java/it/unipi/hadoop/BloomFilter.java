@@ -47,13 +47,10 @@ public class BloomFilter implements Writable {
      * @param movieId
      */
     public void add(String movieId){
+        int[] hashIndexes = computeHash(this.K, movieId, this.m);
         for (int i = 0; i < this.K; i++) {
-            int index = murmurHash.hash(movieId.getBytes(), movieId.length(), i);
-            index %= m;
-            index = Math.abs(index);
-
             // TODO: handle exception
-            bitArray.set(index);
+            bitArray.set(hashIndexes[i]);
         }
     }
 
@@ -63,17 +60,31 @@ public class BloomFilter implements Writable {
      * @return
      */
     public boolean test(String movieId){
+        int[] hashIndexes = computeHash(this.K, movieId, this.m);
         for (int i = 0; i < this.K; i++) {
-            int index = murmurHash.hash(movieId.getBytes(), movieId.length(), i);
-            index %= m;
-            index = Math.abs(index);
-
             // TODO: handle exception
-            if(!bitArray.get(index)){
+            if(!bitArray.get(hashIndexes[i])){
                 return false;
             }
         }
         return true;
+    }
+
+    /**
+     * 
+     * @param K
+     * @param movieId
+     * @param m
+     * @return
+     */
+    public static int[] computeHash (int K, String movieId, int m){
+        int[] hashIndexes = new int[K];
+        for (int i = 0; i < K; i++) {
+            hashIndexes[i] = murmurHash.hash(movieId.getBytes(), movieId.length(), i);
+            hashIndexes[i] %= m;
+            hashIndexes[i] = Math.abs(hashIndexes[i]);
+        }
+        return hashIndexes;
     }
 
     /**
