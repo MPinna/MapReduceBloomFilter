@@ -29,17 +29,12 @@ public class MapRedBloomFilterWithIndexes
         //Reuse writable key and value obj
         private static final IntWritable rate = new IntWritable();
         private static final ArrayPrimitiveWritable hashesValue = new ArrayPrimitiveWritable();
-        
-        //Utility objs
-        private static int[] hashValue;
 
         public void setup(Context context) throws IOException, InterruptedException
         {
             // Set parameters (from job configiguration)
             k =  context.getConfiguration().getInt("k_param", 5);
             m =  context.getConfiguration().getInt("m_param", 1000000);
-            // Utility data structure
-            hashValue = new int[k];
         }
 
         public void map(final Object key, final Text value, final Context context)
@@ -72,7 +67,7 @@ public class MapRedBloomFilterWithIndexes
                         }
                         
                         // Compute k hash functions
-                        hashValue = BloomFilter.computeHash(k, movieId, m);
+                        int[] hashValue = BloomFilter.computeHash(k, movieId, m);
 
                         // Compute rounded rating and set Map key
                         rate.set(Math.round(rawRate));
