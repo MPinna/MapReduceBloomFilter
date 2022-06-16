@@ -23,15 +23,14 @@ public class BloomFilter implements Writable {
 
     // to be used by Shuffle and Sort
     public BloomFilter(){
-
     }
 
     /**
-     * 
-     * @param rating
-     * @param m
-     * @param K
-     * @param p
+     * Create a new BloomFilter object
+     * @param rating a number from 1 to 10 associated with the bloom filter
+     * @param m length of the bit vector
+     * @param K number of hash functions to be used
+     * @param p probability of false positives
      */
     public BloomFilter(int rating, int m, int K, float p){
         this.rating = rating;
@@ -43,8 +42,8 @@ public class BloomFilter implements Writable {
     }
 
     /**
-     * 
-     * @param movieId
+     * Add a movie to the Bloom Filter
+     * @param movieId a string from the IMDB collection with the ID of a movie
      */
     public void add(String movieId){
         int[] hashIndexes = computeHash(this.K, movieId, this.m);
@@ -55,9 +54,10 @@ public class BloomFilter implements Writable {
     }
 
     /**
-     * 
-     * @param movieId
-     * @return
+     * Test if a movie is present in the filter
+     * @param movieId  a string from the IMDB collection with the ID of a movie
+     * @return true if the movie might be in the filter
+     *          false if the movie is definitely not in the filter
      */
     public boolean test(String movieId){
         int[] hashIndexes = computeHash(this.K, movieId, this.m);
@@ -71,10 +71,10 @@ public class BloomFilter implements Writable {
     }
 
     /**
-     * 
-     * @param K
-     * @param movieId
-     * @param m
+     * Compute the outputs of all the hash functions
+     * @param K Number of hash functions
+     * @param movieId id of the movie whose digests have to be computed
+     * @param m length of the bit vector of  the filter
      * @return
      */
     public static int[] computeHash (int K, String movieId, int m){
@@ -98,10 +98,17 @@ public class BloomFilter implements Writable {
         this.bitArray.set(index);
     }
 
+    /**
+     * Perform a bit-wise OR between the object and another bloom filter
+     * @param that the bloom filter whose bitarray is to be OR-ed with the object
+     */
     public void or(BloomFilter that){
         this.bitArray.or(that.bitArray);
     } 
     
+    /**
+     * Reset all the bits of the bloom filter to 0
+     */
     public void clear(){
         this.bitArray.clear();
     }
