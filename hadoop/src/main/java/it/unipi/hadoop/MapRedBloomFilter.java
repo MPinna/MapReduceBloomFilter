@@ -95,12 +95,23 @@ public class MapRedBloomFilter
 
     }
     
-    public static class MapRedBloomFilterReducer extends Reducer<IntWritable, BloomFilter, IntWritable, Text> { // change parameters type
+    public static class MapRedBloomFilterReducer extends Reducer<IntWritable, BloomFilter, IntWritable, BloomFilter> {
 
+        @Override
         public void reduce(IntWritable key, Iterable<BloomFilter> values, final Context context)
                 throws IOException, InterruptedException 
         {
-            // TODO
+            int rating = key.get();
+            BloomFilter bloomFilter = new BloomFilter(rating,
+                                                      MapRedBloomFilterMapper.M,
+                                                      MapRedBloomFilterMapper.K,
+                                                      MapRedBloomFilterMapper.P);
+
+            for (BloomFilter value : values) {
+                bloomFilter.or(value);
+            }
+
+            context.write(key, bloomFilter);
         }
     }
 
@@ -134,8 +145,8 @@ public class MapRedBloomFilter
         //Config reducer
         job.setNumReduceTasks(1); //TODO to change
         job.setReducerClass(MapRedBloomFilterReducer.class);
-        //job.setOutputKeyClass(Text.class); //TODO: depends by reducer
-        //job.setOutputValueClass(Text.class); //TODO: depends by reducer
+        job.setOutputKeyClass(IntWritable.class); //TODO: depends by reducer
+        job.setOutputValueClass(BloomFilter.class); //TODO: depends by reducer
         //job.setCombinerClass(MapRedBloomFilterReducer.class); //TODO: combiner or single emit in cleanup 
        
         // Config input/output
