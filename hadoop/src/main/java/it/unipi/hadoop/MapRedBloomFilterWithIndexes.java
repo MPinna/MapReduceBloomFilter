@@ -54,7 +54,7 @@ public class MapRedBloomFilterWithIndexes
 
                     if (tokens.length == 3) {
                         String movieId = null;
-                        Float rawRate;
+                        float rawRate;
 
                         movieId= tokens[0];
                         if(movieId == null){
