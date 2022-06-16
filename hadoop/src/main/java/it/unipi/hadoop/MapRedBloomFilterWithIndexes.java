@@ -50,11 +50,11 @@ public class MapRedBloomFilterWithIndexes
                     if (record == null || record.length() == 0)
                         return;
 
-                    String[] tokens = record.trim().split("\\t");
+                    String[] tokens = record.split("\t+");
 
                     if (tokens.length == 3) {
                         String movieId = null;
-                        double rawRate;
+                        Float rawRate;
 
                         movieId= tokens[0];
                         if(movieId == null){
@@ -62,7 +62,7 @@ public class MapRedBloomFilterWithIndexes
                         }
 
                         try{
-                            rawRate = Double.parseDouble(tokens[1]);
+                            rawRate = Float.parseFloat(tokens[1]);
                         }
                         catch(NumberFormatException e){
                             return;
@@ -75,7 +75,7 @@ public class MapRedBloomFilterWithIndexes
                         hashValue = BloomFilter.computeHash(k, movieId, m);
 
                         // Compute rounded rating and set Map key
-                        rate.set((int)Math.ceil(rawRate));
+                        rate.set(Math.round(rawRate));
 
                         // Set Map value
                         hashesValue.set(hashValue);
