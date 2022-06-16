@@ -150,4 +150,8 @@ public class BloomFilter implements Writable {
         this.bitArray = BitSet.valueOf(fullBitSet);
     }
     
+
+    public BitSet getBitArray(){
+        return bitArray;
+    }
 }

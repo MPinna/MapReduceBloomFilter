@@ -1,8 +1,16 @@
 package it.unipi.hadoop;
 
+import java.io.BufferedWriter;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FSDataOutputStream;
+import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.ArrayPrimitiveWritable;
 import org.apache.hadoop.io.IntWritable;
@@ -16,6 +24,7 @@ import org.apache.hadoop.mapreduce.lib.input.NLineInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.util.GenericOptionsParser;
+import org.apache.hadoop.util.Progressable;
 
 public class MapRedBloomFilterWithIndexes
 {
@@ -88,6 +97,7 @@ public class MapRedBloomFilterWithIndexes
         private int m;
         private float p;
 
+        BloomFilter bloomFilter;
 
         public void setup(Context context) throws IOException, InterruptedException
         {
@@ -102,7 +112,7 @@ public class MapRedBloomFilterWithIndexes
                 throws IOException, InterruptedException {
                     //Create BloomFilter for the given rating
                     int rating = key.get();
-                    BloomFilter bloomFilter = new BloomFilter(rating, m, k, p);
+                    bloomFilter = new BloomFilter(rating, m, k, p);
                    
                     //Add indexes
                     for(ArrayPrimitiveWritable value: values){
@@ -114,6 +124,21 @@ public class MapRedBloomFilterWithIndexes
                     }
 
                     context.write(null, bloomFilter);
+        }
+
+        public void cleanup(Context context) throws IOException, InterruptedException {
+            //Save bloomFilter in HDFS
+            byte[] bytes = bloomFilter.getBitArray().toByteArray();
+            Configuration configuration = new Configuration();
+            String defaultFSNode = "hdfs://localhost:9000";
+            configuration.set("fs.defaultFS", defaultFSNode);
+            FileSystem fileSystem = FileSystem.get(configuration);
+            String fileName = "example.txt";
+            Path hdfsWritePath = new Path("/data/" + fileName);
+            FSDataOutputStream out = fileSystem.create(hdfsWritePath);
+            out.write(bytes);
+            out.close();
+            fileSystem.close();
         }
     }
 
