@@ -13,18 +13,19 @@ import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.input.NLineInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.util.GenericOptionsParser;
 
 public class MapRedBloomFilter
 {
-    public static class MapRedBloomFilterMapper extends Mapper<LongWritable, Text, IntWritable, BloomFilter>
+    public static class MapRedBloomFilterMapper extends Mapper<Object, Text, IntWritable, BloomFilter>
     {
         private final static int N_RATINGS = 10;
         private static float P;
         private static int M;
         private static int K;
         
-        private static BloomFilter[] bloomFilters;
+        private BloomFilter[] bloomFilters;
         private static IntWritable outKey = new IntWritable();
         
         @Override
@@ -37,12 +38,12 @@ public class MapRedBloomFilter
 
             // Set parameters (from job configuration)
             K =  context.getConfiguration().getInt("k_param", 5);
-            M =  context.getConfiguration().getInt("m_param", 1000000);
+            M =  context.getConfiguration().getInt("m_param", 40960);
             P =  context.getConfiguration().getFloat("p_param", 0.01f);
         }
     
         @Override
-        public void map(LongWritable key, Text value, Context context) 
+        public void map(Object key, Text value, Context context) 
                 throws IOException, InterruptedException 
         {
             // Get raw input values
@@ -77,10 +78,6 @@ public class MapRedBloomFilter
             // Update bloom filter
             bloomFilters[index-1].add(movieId);
             
-            //outKey.set(index);
-            // Emit partial bloom filer 
-            //context.write(outKey, bloomFilters[index-1]);
-            
         }
 
         /*
@@ -97,15 +94,22 @@ public class MapRedBloomFilter
     
     public static class MapRedBloomFilterReducer extends Reducer<IntWritable, BloomFilter, IntWritable, BloomFilter> {
 
+        private static int k;
+        private static int m;
+        private static float p;
+
         @Override
         public void reduce(IntWritable key, Iterable<BloomFilter> values, final Context context)
                 throws IOException, InterruptedException 
         {
+
+
+            k = context.getConfiguration().getInt("k_param", 5);
+            m = context.getConfiguration().getInt("m_param", 40960000); // 5MiB
+            p = context.getConfiguration().getFloat("p_param", (float) 0.001);
+
             int rating = key.get();
-            BloomFilter bloomFilter = new BloomFilter(rating,
-                                                      MapRedBloomFilterMapper.M,
-                                                      MapRedBloomFilterMapper.K,
-                                                      MapRedBloomFilterMapper.P);
+            BloomFilter bloomFilter = new BloomFilter(rating, m, k, p);
 
             for (BloomFilter value : values) {
                 bloomFilter.or(value);
@@ -128,13 +132,14 @@ public class MapRedBloomFilter
            System.err.println("Usage: BloomFilter <input> <output>");
            System.exit(1);
         }
+
         System.out.println("args[0]: <input>="  + otherArgs[0]);
         System.out.println("args[1]: <output>=" + otherArgs[1]);
 
         //TODO To change (from command line ?)
         //Set the BloomFilter parameters
         job.getConfiguration().set("k_param", "5");
-        job.getConfiguration().set("m_param", "1000000");
+        job.getConfiguration().set("m_param", "40960000"); // 5 MiB
         job.getConfiguration().set("p_param", "0.001");
         
         // Config mapper 
@@ -147,12 +152,11 @@ public class MapRedBloomFilter
         job.setReducerClass(MapRedBloomFilterReducer.class);
         job.setOutputKeyClass(IntWritable.class); //TODO: depends by reducer
         job.setOutputValueClass(BloomFilter.class); //TODO: depends by reducer
-        //job.setCombinerClass(MapRedBloomFilterReducer.class); //TODO: combiner or single emit in cleanup 
        
         // Config input/output
         job.setInputFormatClass(NLineInputFormat.class);
-        //job.setOutputFormatClass(TextOutputFormat.class); TODO: depends by reducer
-        NLineInputFormat.setNumLinesPerSplit(job, 500); // TODO: change this value     
+        job.setOutputFormatClass(TextOutputFormat.class);
+        NLineInputFormat.setNumLinesPerSplit(job, 157000); // TODO: change this value     
 
         FileInputFormat.addInputPath(job, new Path(otherArgs[0]));
         FileOutputFormat.setOutputPath(job, new Path(args[1]));

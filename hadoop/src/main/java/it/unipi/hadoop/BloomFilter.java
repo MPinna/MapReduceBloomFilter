@@ -13,9 +13,10 @@ public class BloomFilter implements Writable {
 
     private int rating;
     private int m;
-    private float P;
     private int K;
+    private float P;
     private BitSet bitArray;
+    private int receivedLength;
 
     // TODO: check if this should actually be static
     private final static MurmurHash murmurHash = (MurmurHash) MurmurHash.getInstance();
@@ -41,6 +42,29 @@ public class BloomFilter implements Writable {
         this.bitArray = new BitSet(m);
     }
 
+    @Override
+    public String toString(){
+
+        //TODO: return JSON instead of raw string
+        //TODO: avoid writing a lot of useless 0
+        final StringBuilder builder = new StringBuilder();
+        builder.append(Integer.toString(this.rating) + ",");
+        builder.append(Integer.toString(this.m) + ",");
+        builder.append(Integer.toString(this.K) + ",");
+        builder.append(Float.toString(this.P) + ",");
+        builder.append("Length:" + Integer.toString(this.bitArray.length()) + ",");
+        builder.append("Size:" + Integer.toString(this.bitArray.size()) + ",");
+        builder.append("ByteArrayLen:" + Integer.toString(this.bitArray.toByteArray().length) + ",");
+        builder.append("ReceivedLength:" + Integer.toString(this.receivedLength) + ",");
+
+      
+        for(byte b : bitArray.toByteArray()) {
+        builder.append(String.format("%02x", b));
+        }
+
+        return builder.toString();
+    }
+
     /**
      * Add a movie to the Bloom Filter
      * @param movieId a string from the IMDB collection with the ID of a movie
@@ -49,7 +73,7 @@ public class BloomFilter implements Writable {
         int[] hashIndexes = computeHash(this.K, movieId, this.m);
         for (int i = 0; i < this.K; i++) {
             // TODO: handle exception
-            bitArray.set(hashIndexes[i]);
+            this.bitArray.set(hashIndexes[i]);
         }
     }
 
@@ -63,7 +87,7 @@ public class BloomFilter implements Writable {
         int[] hashIndexes = computeHash(this.K, movieId, this.m);
         for (int i = 0; i < this.K; i++) {
             // TODO: handle exception
-            if(!bitArray.get(hashIndexes[i])){
+            if(!this.bitArray.get(hashIndexes[i])){
                 return false;
             }
         }
@@ -123,6 +147,10 @@ public class BloomFilter implements Writable {
 
         byte[] serializedBitSet = this.bitArray.toByteArray();
 
+        if(serializedBitSet.length == 0){
+            throw new IOException("Serialized bitSet size is 0");
+        }
+
         // TODO: check if this causes poor memory perfomance  
         out.writeInt(serializedBitSet.length);
         out.write(serializedBitSet);
@@ -138,6 +166,7 @@ public class BloomFilter implements Writable {
         int partialBitsetSize = in.readInt();
         
         byte[] temp = new byte[partialBitsetSize];
+        this.receivedLength = partialBitsetSize;
         in.readFully(temp);
 
         // byte arrays are automatically filled with zeros by default upon declaration
@@ -150,8 +179,7 @@ public class BloomFilter implements Writable {
         this.bitArray = BitSet.valueOf(fullBitSet);
     }
     
-
     public BitSet getBitArray(){
-        return bitArray;
+        return this.bitArray;
     }
 }

@@ -41,9 +41,9 @@ public class MapRedBloomFilterWithIndexes
 
         public void setup(Context context) throws IOException, InterruptedException
         {
-            // Set parameters (from job configiguration)
+            // Set parameters (from job configuration)
             k =  context.getConfiguration().getInt("k_param", 5);
-            m =  context.getConfiguration().getInt("m_param", 1000000);
+            m =  context.getConfiguration().getInt("m_param", 1000);
         }
 
         public void map(final Object key, final Text value, final Context context)
@@ -103,7 +103,7 @@ public class MapRedBloomFilterWithIndexes
         {
             // Set parameters (from job configiguration)
             k = context.getConfiguration().getInt("k_param", 5);
-            m = context.getConfiguration().getInt("m_param", 1000000);
+            m = context.getConfiguration().getInt("m_param", 40960000); // 5 MiB
             p = context.getConfiguration().getFloat("p_param", (float) 0.001);
 
         }
@@ -128,17 +128,17 @@ public class MapRedBloomFilterWithIndexes
 
         public void cleanup(Context context) throws IOException, InterruptedException {
             //Save bloomFilter in HDFS
-            byte[] bytes = bloomFilter.getBitArray().toByteArray();
-            Configuration configuration = new Configuration();
-            String defaultFSNode = "hdfs://localhost:9000";
-            configuration.set("fs.defaultFS", defaultFSNode);
-            FileSystem fileSystem = FileSystem.get(configuration);
-            String fileName = "example.txt";
-            Path hdfsWritePath = new Path("/data/" + fileName);
-            FSDataOutputStream out = fileSystem.create(hdfsWritePath);
-            out.write(bytes);
-            out.close();
-            fileSystem.close();
+            // byte[] bytes = bloomFilter.getBitArray().toByteArray();
+            // Configuration configuration = new Configuration();
+            // String defaultFSNode = "hdfs://localhost:9000";
+            // configuration.set("fs.defaultFS", defaultFSNode);
+            // FileSystem fileSystem = FileSystem.get(configuration);
+            // String fileName = "example.txt";
+            // Path hdfsWritePath = new Path("/data/" + fileName);
+            // FSDataOutputStream out = fileSystem.create(hdfsWritePath);
+            // out.write(bytes);
+            // out.close();
+            // fileSystem.close();
         }
     }
 
@@ -160,7 +160,7 @@ public class MapRedBloomFilterWithIndexes
         //TODO To change
         //Set the BloomFilter parameters
         job.getConfiguration().set("k_param", "5");
-        job.getConfiguration().set("m_param", "1000000");
+        job.getConfiguration().set("m_param", "40960000"); // 5 MiB
         job.getConfiguration().set("p_param", "0.001");
 
 
@@ -189,7 +189,7 @@ public class MapRedBloomFilterWithIndexes
         job.setInputFormatClass(NLineInputFormat.class);
         job.setOutputFormatClass(TextOutputFormat.class);
 
-        NLineInputFormat.setNumLinesPerSplit(job, 500);
+        NLineInputFormat.setNumLinesPerSplit(job, 157000);
 
         System.exit(job.waitForCompletion(true) ? 0 : 1);
     }
