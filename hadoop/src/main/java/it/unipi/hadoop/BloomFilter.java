@@ -16,15 +16,13 @@ public class BloomFilter implements Writable {
     private int K;
     private float P;
     private BitSet bitArray;
-    private int receivedLength;
 
     // TODO: check if this should actually be static
     private final static MurmurHash murmurHash = (MurmurHash) MurmurHash.getInstance();
 
 
     // to be used by Shuffle and Sort
-    public BloomFilter(){
-    }
+    public BloomFilter(){ }
 
     /**
      * Create a new BloomFilter object
@@ -42,27 +40,8 @@ public class BloomFilter implements Writable {
         this.bitArray = new BitSet(m);
     }
 
-    @Override
-    public String toString(){
-
-        //TODO: return JSON instead of raw string
-        //TODO: avoid writing a lot of useless 0
-        final StringBuilder builder = new StringBuilder();
-        builder.append(Integer.toString(this.rating) + ",");
-        builder.append(Integer.toString(this.m) + ",");
-        builder.append(Integer.toString(this.K) + ",");
-        builder.append(Float.toString(this.P) + ",");
-        builder.append("Length:" + Integer.toString(this.bitArray.length()) + ",");
-        builder.append("Size:" + Integer.toString(this.bitArray.size()) + ",");
-        builder.append("ByteArrayLen:" + Integer.toString(this.bitArray.toByteArray().length) + ",");
-        builder.append("ReceivedLength:" + Integer.toString(this.receivedLength) + ",");
-
-      
-        for(byte b : bitArray.toByteArray()) {
-        builder.append(String.format("%02x", b));
-        }
-
-        return builder.toString();
+    public BitSet getBitArray(){
+        return this.bitArray;
     }
 
     /**
@@ -147,10 +126,6 @@ public class BloomFilter implements Writable {
 
         byte[] serializedBitSet = this.bitArray.toByteArray();
 
-        if(serializedBitSet.length == 0){
-            throw new IOException("Serialized bitSet size is 0");
-        }
-
         // TODO: check if this causes poor memory perfomance  
         out.writeInt(serializedBitSet.length);
         out.write(serializedBitSet);
@@ -166,7 +141,7 @@ public class BloomFilter implements Writable {
         int partialBitsetSize = in.readInt();
         
         byte[] temp = new byte[partialBitsetSize];
-        this.receivedLength = partialBitsetSize;
+
         in.readFully(temp);
 
         // byte arrays are automatically filled with zeros by default upon declaration
@@ -179,7 +154,25 @@ public class BloomFilter implements Writable {
         this.bitArray = BitSet.valueOf(fullBitSet);
     }
     
-    public BitSet getBitArray(){
-        return this.bitArray;
+    @Override
+    public String toString(){
+
+        //TODO: return JSON instead of raw string
+        //TODO: avoid writing a lot of useless 0
+        final StringBuilder builder = new StringBuilder();
+        builder.append(Integer.toString(this.rating) + ",");
+        builder.append(Integer.toString(this.m) + ",");
+        builder.append(Integer.toString(this.K) + ",");
+        builder.append(Float.toString(this.P) + ",");
+        builder.append("Length:" + Integer.toString(this.bitArray.length()) + ",");
+        builder.append("Size:" + Integer.toString(this.bitArray.size()) + ",");
+        builder.append("ByteArrayLen:" + Integer.toString(this.bitArray.toByteArray().length) + ",");
+      
+        for(byte b : bitArray.toByteArray()) {
+        builder.append(String.format("%02x", b));
+        }
+
+        return builder.toString();
     }
+
 }

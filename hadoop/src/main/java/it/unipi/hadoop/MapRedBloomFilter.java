@@ -1,11 +1,9 @@
 package it.unipi.hadoop;
-
 import java.io.IOException;
-
+import org.apache.log4j.Logger;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IntWritable;
-import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.Job;
@@ -25,21 +23,26 @@ public class MapRedBloomFilter
         private static int M;
         private static int K;
         
-        private BloomFilter[] bloomFilters;
+        private static BloomFilter[] bloomFilters;
         private static IntWritable outKey = new IntWritable();
-        
+        private static Logger logger;
+
         @Override
         protected void setup(Context context) throws IOException, InterruptedException {
+            logger = Logger.getLogger(MapRedBloomFilterMapper.class.getName());
+            
+            // Set parameters (from job configuration)
+            K =  context.getConfiguration().getInt("k_param", 5);
+            M =  context.getConfiguration().getInt("m_param", 8192);
+            P =  context.getConfiguration().getFloat("p_param", 0.01f);
+            
+            logger.info(String.format("Received values: <M = %d K = %d P = %f>", M, K, P));
+            
             // Init bloom filters
             bloomFilters = new BloomFilter[N_RATINGS];
             for (int i = 0; i < N_RATINGS; ++i){
                 bloomFilters[i] = new BloomFilter(i+1, M, K, P);
             }
-
-            // Set parameters (from job configuration)
-            K =  context.getConfiguration().getInt("k_param", 5);
-            M =  context.getConfiguration().getInt("m_param", 40960);
-            P =  context.getConfiguration().getFloat("p_param", 0.01f);
         }
     
         @Override
@@ -76,8 +79,7 @@ public class MapRedBloomFilter
             }
             
             // Update bloom filter
-            bloomFilters[index-1].add(movieId);
-            
+            bloomFilters[index-1].add(movieId);            
         }
 
         /*
@@ -105,7 +107,7 @@ public class MapRedBloomFilter
 
 
             k = context.getConfiguration().getInt("k_param", 5);
-            m = context.getConfiguration().getInt("m_param", 40960000); // 5MiB
+            m = context.getConfiguration().getInt("m_param", 8192); // 5MiB
             p = context.getConfiguration().getFloat("p_param", (float) 0.001);
 
             int rating = key.get();
@@ -139,19 +141,19 @@ public class MapRedBloomFilter
         //TODO To change (from command line ?)
         //Set the BloomFilter parameters
         job.getConfiguration().set("k_param", "5");
-        job.getConfiguration().set("m_param", "40960000"); // 5 MiB
+        job.getConfiguration().set("m_param", "8192"); // 5 MiB
         job.getConfiguration().set("p_param", "0.001");
         
         // Config mapper 
         job.setMapperClass(MapRedBloomFilterMapper.class);
-        job.setMapOutputKeyClass(IntWritable.class); //Valid both for mapper and reducer
+        job.setMapOutputKeyClass(IntWritable.class);
         job.setMapOutputValueClass(BloomFilter.class);
     
         //Config reducer
         job.setNumReduceTasks(1); //TODO to change
         job.setReducerClass(MapRedBloomFilterReducer.class);
-        job.setOutputKeyClass(IntWritable.class); //TODO: depends by reducer
-        job.setOutputValueClass(BloomFilter.class); //TODO: depends by reducer
+        job.setOutputKeyClass(IntWritable.class);
+        job.setOutputValueClass(BloomFilter.class);
        
         // Config input/output
         job.setInputFormatClass(NLineInputFormat.class);
