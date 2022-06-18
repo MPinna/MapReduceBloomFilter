@@ -1,16 +1,8 @@
 package it.unipi.hadoop;
 
-import java.io.BufferedWriter;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.nio.charset.StandardCharsets;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FSDataOutputStream;
-import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.ArrayPrimitiveWritable;
 import org.apache.hadoop.io.IntWritable;
@@ -24,7 +16,26 @@ import org.apache.hadoop.mapreduce.lib.input.NLineInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.util.GenericOptionsParser;
-import org.apache.hadoop.util.Progressable;
+
+
+final class UtilityConstants{
+    //Constant value for number of possible different rounded rates
+    public static final int NUM_OF_RATES = 10;
+
+    //Constant value for BloomFilter required false positive rate
+    public static final float FALSE_POSITIVE_RATE = (float) 0.01; //1%
+    
+    //Constant values for implementation versions name
+    public static final String[] NAME_OF_VERSIONS = {"WithIndexes","WithBloomFilters"};    
+    
+    //Constant defualt values for K and M BloomFilter parameters
+    public static final int DEFAULT_K= 5;
+    public static final int DEFAULT_M = 40960000; // 5 MiB
+    
+    //Constant value for number of reduce tasks
+    public static final int NUM_REDUCERS = 3;
+}
+
 
 public class MapRedBloomFilterWithIndexes
 {
@@ -33,7 +44,11 @@ public class MapRedBloomFilterWithIndexes
     {
         // Number of hash functions to be computed
         private static int k;
-        private static int m;
+        // Vector containg the dimensions in bit of each BloomFilter
+        private static final int[] m = new int[UtilityConstants.NUM_OF_RATES];
+
+        // Implementation version to be executed
+        private static String version;
 
         //Reuse writable key and value obj
         private static final IntWritable rate = new IntWritable();
@@ -41,9 +56,13 @@ public class MapRedBloomFilterWithIndexes
 
         public void setup(Context context) throws IOException, InterruptedException
         {
-            // Set parameters (from job configuration)
-            k =  context.getConfiguration().getInt("k_param", 5);
-            m =  context.getConfiguration().getInt("m_param", 1000);
+            // Set k and m BloomFilter parameters (from job configuration)
+            k = context.getConfiguration().getInt("k_param", UtilityConstants.DEFAULT_K);
+            for (int i = 0; i< UtilityConstants.NUM_OF_RATES; ++i)
+                m[i] = context.getConfiguration().getInt("m_param_rate_"+(i+1), UtilityConstants.DEFAULT_M);
+            
+            // Set version parameter (from job configuration)
+            version = context.getConfiguration().get("version", UtilityConstants.NAME_OF_VERSIONS[0]);
         }
 
         public void map(final Object key, final Text value, final Context context)
@@ -75,11 +94,14 @@ public class MapRedBloomFilterWithIndexes
                             return;
                         }
                         
-                        // Compute k hash functions
-                        int[] hashValue = BloomFilter.computeHash(k, movieId, m);
+                        // Compute rounded rate
+                        int roundedRate = Math.round(rawRate);
 
-                        // Compute rounded rating and set Map key
-                        rate.set(Math.round(rawRate));
+                        // Compute k hash functions
+                        int[] hashValue = BloomFilter.computeHash(k, movieId, m[roundedRate - 1]);
+
+                        // Set Map key
+                        rate.set(roundedRate);
 
                         // Set Map value
                         hashesValue.set(hashValue);
@@ -90,29 +112,39 @@ public class MapRedBloomFilterWithIndexes
         }
     }
 
+
     public static class MapRedBloomFilterReducer extends Reducer<IntWritable,ArrayPrimitiveWritable,NullWritable,BloomFilter> {
 
         //TODO add clean for classes
-        private int k;
-        private int m;
-        private float p;
+        // Number of hash functions to be computed
+        private static int k;
+        // Vector containg the dimensions in bit of each BloomFilter
+        private static final int[] m = new int[UtilityConstants.NUM_OF_RATES];
+        
+        // Utility attribute for code readability
+        private static final float p = UtilityConstants.FALSE_POSITIVE_RATE;
 
-        BloomFilter bloomFilter;
+        // Implementation version to be executed
+        private static String version;
+
+        private BloomFilter bloomFilter;
 
         public void setup(Context context) throws IOException, InterruptedException
         {
-            // Set parameters (from job configiguration)
-            k = context.getConfiguration().getInt("k_param", 5);
-            m = context.getConfiguration().getInt("m_param", 40960000); // 5 MiB
-            p = context.getConfiguration().getFloat("p_param", (float) 0.001);
-
+            // Set k and m BloomFilter parameters (from job configuration)
+            k = context.getConfiguration().getInt("k_param", UtilityConstants.DEFAULT_K);
+            for (int i = 0; i< UtilityConstants.NUM_OF_RATES; ++i)
+                m[i] = context.getConfiguration().getInt("m_param_rate_"+(i+1), UtilityConstants.DEFAULT_M);
+            
+            // Set version parameter (from job configuration)
+            version = context.getConfiguration().get("version", UtilityConstants.NAME_OF_VERSIONS[0]);
         }
 
         public void reduce(final IntWritable key, final Iterable<ArrayPrimitiveWritable> values, final Context context)
                 throws IOException, InterruptedException {
                     //Create BloomFilter for the given rating
                     int rating = key.get();
-                    bloomFilter = new BloomFilter(rating, m, k, p);
+                    bloomFilter = new BloomFilter(rating, m[rating - 1], k, p);
                    
                     //Add indexes
                     for(ArrayPrimitiveWritable value: values){
@@ -150,19 +182,54 @@ public class MapRedBloomFilterWithIndexes
         job.setJarByClass(MapRedBloomFilterWithIndexes.class);
 
         String[] otherArgs = new GenericOptionsParser(conf, args).getRemainingArgs();
-        if (otherArgs.length != 2) {
-           System.err.println("Usage: BloomFilter <input> <output>");
+        if (otherArgs.length != 15) {
+           System.err.println("Usage: BloomFilter <input> <output> <num_lines_per_split> <m_value>{10 times} <k_value> <version>");
            System.exit(1);
         }
+        //Print input and output file path
         System.out.println("args[0]: <input>="  + otherArgs[0]);
         System.out.println("args[1]: <output>=" + otherArgs[1]);
 
+        // Get invocation parameters
+        int numLinesPerSplit = 0;
+        int[] m_value = new int[UtilityConstants.NUM_OF_RATES];
+        int k_value = 0;
+
+        try{
+            //Take num_lines_per_split parameter
+            numLinesPerSplit = Integer.parseInt(otherArgs[2]);
+            
+            //Take ten values of m parameter
+            for(short i = 0; i<UtilityConstants.NUM_OF_RATES; ++i)
+                m_value[i] = Integer.parseInt(otherArgs[3+i]);
+            
+            //Take k value
+            k_value = Integer.parseInt(otherArgs[13]);
+        }
+        catch(NumberFormatException e){
+            e.printStackTrace();
+            System.err.println("Usage: BloomFilter <input> <output> <num_lines_per_split> <m_value>{10} <k_value> <version>");
+            System.exit(1);
+        }
+        //Take implementation version to be executed
+        String version = otherArgs[14];
+        if(!version.equalsIgnoreCase(UtilityConstants.NAME_OF_VERSIONS[0]) &&  
+            !version.equalsIgnoreCase(UtilityConstants.NAME_OF_VERSIONS[1])){
+                System.err.println("Invalide <version> parameter. Options:"+
+                    "\n1)"+UtilityConstants.NAME_OF_VERSIONS[0]+
+                    "\n2)"+UtilityConstants.NAME_OF_VERSIONS[1]);
+                System.exit(1);
+            }
+
         //TODO To change
         //Set the BloomFilter parameters
-        job.getConfiguration().set("k_param", "5");
-        job.getConfiguration().set("m_param", "40960000"); // 5 MiB
-        job.getConfiguration().set("p_param", "0.001");
-
+        //K value
+        job.getConfiguration().set("k_param", String.valueOf(k_value));
+        //M value for each rating
+        for(short i = 0; i<UtilityConstants.NUM_OF_RATES; ++i)
+            job.getConfiguration().set("m_param_rate_"+(i+1), String.valueOf(m_value[i]));
+        //Set the version of MapReduce implementation to be executed
+        job.getConfiguration().set("version", version);
 
         //Set mapper and reducer
         job.setMapperClass(MapRedBloomFilterMapper.class);
@@ -179,7 +246,7 @@ public class MapRedBloomFilterWithIndexes
 
         //TODO to change
         //Define number of reduce tasks
-        job.setNumReduceTasks(1);
+        job.setNumReduceTasks(UtilityConstants.NUM_REDUCERS);
         
         //Define I/O
         FileInputFormat.addInputPath(job, new Path(otherArgs[0]));
@@ -189,7 +256,7 @@ public class MapRedBloomFilterWithIndexes
         job.setInputFormatClass(NLineInputFormat.class);
         job.setOutputFormatClass(TextOutputFormat.class);
 
-        NLineInputFormat.setNumLinesPerSplit(job, 157000);
+        NLineInputFormat.setNumLinesPerSplit(job, numLinesPerSplit);
 
         System.exit(job.waitForCompletion(true) ? 0 : 1);
     }
