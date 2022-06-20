@@ -90,7 +90,7 @@ public class MapRedComputeParams
                 bestM = (int)Math.ceil(-(maxK*N)/Math.log(1-Math.pow(P, 1.0f/maxK)));
             }
             
-            outValue.set(String.format("%d,%d,%d",N, bestM, bestK));
+            outValue.set(String.format("%d\t%d\t%d",N, bestM, bestK));
             
             logger.info(String.format("Rating: %d, N: %d, bestM: %d, bestK: %d", key.get(), N, bestM, bestK));
             
