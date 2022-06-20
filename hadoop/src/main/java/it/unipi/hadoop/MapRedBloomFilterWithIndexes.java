@@ -114,8 +114,6 @@ public class MapRedBloomFilterWithIndexes
 
 
     public static class MapRedBloomFilterReducer extends Reducer<IntWritable,ArrayPrimitiveWritable,NullWritable,BloomFilter> {
-
-        //TODO add clean for classes
         // Number of hash functions to be computed
         private static int k;
         // Vector containg the dimensions in bit of each BloomFilter
@@ -156,21 +154,6 @@ public class MapRedBloomFilterWithIndexes
                     }
 
                     context.write(null, bloomFilter);
-        }
-
-        public void cleanup(Context context) throws IOException, InterruptedException {
-            //Save bloomFilter in HDFS
-            // byte[] bytes = bloomFilter.getBitArray().toByteArray();
-            // Configuration configuration = new Configuration();
-            // String defaultFSNode = "hdfs://localhost:9000";
-            // configuration.set("fs.defaultFS", defaultFSNode);
-            // FileSystem fileSystem = FileSystem.get(configuration);
-            // String fileName = "example.txt";
-            // Path hdfsWritePath = new Path("/data/" + fileName);
-            // FSDataOutputStream out = fileSystem.create(hdfsWritePath);
-            // out.write(bytes);
-            // out.close();
-            // fileSystem.close();
         }
     }
 
