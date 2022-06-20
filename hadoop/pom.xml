@@ -13,6 +13,13 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
 
+	<distributionManagement>
+		<repository>
+			<id>ssh-repository</id>
+			<url>scp://172.16.4.135/home/hadoop/</url>
+		</repository>
+	</distributionManagement>
+
 	<build>
 		<plugins>
 
@@ -39,6 +46,14 @@
 				</configuration>
 			</plugin>
 		</plugins>
+
+		<extensions>
+      		<extension>
+				<groupId>org.apache.maven.wagon</groupId>
+				<artifactId>wagon-ssh</artifactId>
+				<version>3.5.1</version>
+      		</extension>
+   		</extensions>
 	</build>
 
 	<dependencies>

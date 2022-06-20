@@ -360,3 +360,9 @@ TSWLatexianTemp*
 
 # Makeindex log files
 *.lpz
+
+##############################
+## Other
+##############################
+
+/data
