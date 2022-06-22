@@ -60,7 +60,7 @@ public class MapRedComputeParams
         private static Text outValue = new Text();
         private static int bestM;
         private static int bestK;
-        private static int maxK;
+        private static int K;
         private static int N;
         private static float P;
         private static final Logger logger = Logger.getLogger(MapRedComputeParamsReducer.class.getName());
@@ -68,7 +68,7 @@ public class MapRedComputeParams
         @Override
         protected void setup(Context context) throws IOException, InterruptedException {
             P =  context.getConfiguration().getFloat("P", UtilityConstants.FALSE_POSITIVE_RATE);
-            maxK = context.getConfiguration().getInt("maxK", Integer.MAX_VALUE);
+            K = context.getConfiguration().getInt("K", 0);
         }
        
         @Override
@@ -82,17 +82,18 @@ public class MapRedComputeParams
                 N += value.get();
             }
             
-            bestM = (int)Math.ceil((N * Math.log(P)) / Math.log(1 / Math.pow(2, Math.log(2))));
-            bestK = (int)Math.round(Math.log(2)*bestM/N);
-            
-            if (bestK > maxK){
-                bestK = maxK;
-                bestM = (int)Math.ceil(-(maxK*N)/Math.log(1-Math.pow(P, 1.0f/maxK)));
+            if (K == 0){ // No constraints on K
+                bestM = (int)Math.ceil((N * Math.log(P)) / Math.log(1 / Math.pow(2, Math.log(2))));
+                bestK = (int)Math.round(Math.log(2)*bestM/N);
+            }
+            else{ // Constraint on K
+                bestK = K;
+                bestM = (int)Math.ceil(-(K*N)/Math.log(1-Math.pow(P, 1.0f/K)));
             }
             
-            outValue.set(String.format("%d\t%d\t%d",N, bestM, bestK));
+            outValue.set(String.format("%f\t%d\t%d\t%d", P, N, bestM, bestK));
             
-            logger.info(String.format("Rating: %d, N: %d, bestM: %d, bestK: %d", key.get(), N, bestM, bestK));
+            logger.info(String.format("Rating: %d, P: %f, N: %d, bestM: %d, bestK: %d", key.get(), P, N, bestM, bestK));
             
             context.write(key, outValue);     
         }
@@ -108,7 +109,7 @@ public class MapRedComputeParams
         // Read job parameters 
         String[] otherArgs = new GenericOptionsParser(conf, args).getRemainingArgs();
         if (otherArgs.length < 4) {
-           System.err.println("Usage: BloomFilter <input> <output> <false_positive_rate> <num_lines_per_split> [maxK]");
+           System.err.println("Usage: BloomFilter <input> <output> <false_positive_rate> <num_lines_per_split> [K]");
            System.exit(1);
         }
 
@@ -118,27 +119,27 @@ public class MapRedComputeParams
         System.out.println("args[3]: <num_lines_per_split>=" + otherArgs[3]);
            
         int numLinesPerSplit = -1;
-        int maxK = Integer.MAX_VALUE;
+        int K = 0;
         // Check inputs args
         try{
             float p = Float.parseFloat(otherArgs[2]);
             numLinesPerSplit = Integer.parseInt(otherArgs[3]);
             if(otherArgs.length == 5){
-                System.out.println("args[4]: <maxK>=" + otherArgs[4]);
-                maxK = Integer.parseInt(otherArgs[4]);
+                System.out.println("args[4]: <K>=" + otherArgs[4]);
+                K = Integer.parseInt(otherArgs[4]);
             }
-            if ((p <= 0 || p > 1) || (numLinesPerSplit < 1) || (maxK < 1)){
+            if ((p <= 0 || p > 1) || (numLinesPerSplit < 1) || (K < 0)){
                 throw new NumberFormatException();
             }
         }
         catch(NumberFormatException ex){
-            System.err.println("Usage: BloomFilter <input> <output> <false_positive_rate> <num_lines_per_split> [maxK]");
+            System.err.println("Usage: BloomFilter <input> <output> <false_positive_rate> <num_lines_per_split> [K]");
             return;
         }
         
         //Set job parameters
         job.getConfiguration().set("P", otherArgs[2]);
-        job.getConfiguration().set("maxK", String.valueOf(maxK));
+        job.getConfiguration().set("K", String.valueOf(K));
 
         
         // Config mapper 
