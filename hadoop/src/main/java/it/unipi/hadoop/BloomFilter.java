@@ -5,9 +5,13 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.util.BitSet;
 
-
+import org.apache.commons.codec.DecoderException;
+import org.apache.commons.codec.binary.Hex;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.util.hash.MurmurHash;
+
+import org.json.JSONObject;
+import org.json.JSONException;
 
 public class BloomFilter implements Writable {
 
@@ -22,7 +26,34 @@ public class BloomFilter implements Writable {
 
 
     // to be used by Shuffle and Sort
-    public BloomFilter(){ }
+    public BloomFilter(){}
+
+    /**
+     * Create a BloomFilter object from a JSON string
+     * @param BloomFilterJsonString
+     */
+    public BloomFilter(String jsonString){
+        JSONObject jsonObject = new JSONObject(jsonString);
+        
+        try {
+            
+            this.rating = jsonObject.getInt("rating");
+            this.m = jsonObject.getInt("m");
+            this.K = jsonObject.getInt("K");
+            this.P = jsonObject.getFloat("P");
+        } catch (JSONException e) {
+            //TODO: handle exception
+        }
+
+        String bitArrayString = new String(jsonObject.getString("bitArray"));
+        try {
+            byte[] bytes = Hex.decodeHex(bitArrayString.toCharArray());
+            this.bitArray = BitSet.valueOf(bytes);
+            
+        } catch (DecoderException e) {
+            //TODO: handle exception
+        }
+    }
 
     /**
      * Create a new BloomFilter object
@@ -157,22 +188,24 @@ public class BloomFilter implements Writable {
     @Override
     public String toString(){
 
-        //TODO: return JSON instead of raw string
-        //TODO: avoid writing a lot of useless 0
+        final JSONObject jsonObject = new JSONObject();
+        try{
+            jsonObject.put("rating", this.rating);
+            jsonObject.put("m", this.m);
+            jsonObject.put("K", this.K);
+            jsonObject.put("P", this.P);
+        }
+        catch(JSONException e){
+            return "JSONException";
+        }
         final StringBuilder builder = new StringBuilder();
-        builder.append(Integer.toString(this.rating) + ",");
-        builder.append(Integer.toString(this.m) + ",");
-        builder.append(Integer.toString(this.K) + ",");
-        builder.append(Float.toString(this.P) + ",");
-        builder.append("Length:" + Integer.toString(this.bitArray.length()) + ",");
-        builder.append("Size:" + Integer.toString(this.bitArray.size()) + ",");
-        builder.append("ByteArrayLen:" + Integer.toString(this.bitArray.toByteArray().length) + ",");
-      
+        
         for(byte b : bitArray.toByteArray()) {
         builder.append(String.format("%02x", b));
         }
 
-        return builder.toString();
+        jsonObject.put("bitArray", builder.toString());
+        return jsonObject.toString();
     }
 
 }
