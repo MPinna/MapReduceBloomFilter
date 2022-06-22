@@ -208,4 +208,8 @@ public class BloomFilter implements Writable {
         return jsonObject.toString();
     }
 
+    public int getRating(){
+        return rating;
+    }
+
 }
