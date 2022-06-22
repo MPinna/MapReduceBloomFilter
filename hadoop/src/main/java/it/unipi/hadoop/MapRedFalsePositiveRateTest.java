@@ -35,6 +35,7 @@ public class MapRedFalsePositiveRateTest
         private Logger logger;
         private int[] false_positive_count;
         private static String pathBloomFilterFile;
+        private static FileSystem fileSystem;
 
         @Override
         public void setup(Context context) throws IOException, InterruptedException
@@ -46,8 +47,9 @@ public class MapRedFalsePositiveRateTest
 
             //Load bloomFilters from HDFS
             Configuration configuration = new Configuration();
+            configuration.setBoolean("fs.hdfs.impl.disable.cache", true);
             configuration.set("fs.defaultFS", "hdfs://localhost:9000");   
-            FileSystem fileSystem = FileSystem.get(configuration);
+            fileSystem = FileSystem.get(configuration);
             FSDataInputStream inputStream = fileSystem.open(new Path(pathBloomFilterFile));
             BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
 
@@ -73,8 +75,8 @@ public class MapRedFalsePositiveRateTest
             }
 
             //Test movie presence on all BloomFilters
-            for(int i=1; i<=UtilityConstants.NUM_OF_RATES; i++){
-                boolean testResult = bloomFiltersByRating.get(i).test((String)tokens[0]);
+            for(int i=0; i<UtilityConstants.NUM_OF_RATES; i++){
+                boolean testResult = bloomFiltersByRating.get(i+1).test((String)tokens[0]);
                 if(testResult)
                     false_positive_count[i]++;
             }
@@ -140,14 +142,13 @@ public class MapRedFalsePositiveRateTest
         job.setJarByClass(MapRedFalsePositiveRateTest.class);
 
         String[] otherArgs = new GenericOptionsParser(conf, args).getRemainingArgs();
-        if (otherArgs.length != 16) {
+        if (otherArgs.length != 14) {
            System.err.println("Usage: BloomFilter <input> <output> <num_lines_per_split> <items_count_per_rate>{10 times} <path_bloom_filters_file>");//TODO 10 times or 10 ?
            System.exit(1);
         }
         //Print input and output file path
         System.out.println("args[0]: <input>="  + otherArgs[0]);
         System.out.println("args[1]: <output>=" + otherArgs[1]);
-        System.out.println("args[13]: <path_bloom_filters_file>=" + otherArgs[13]);
 
         // Get invocation parameters
         int numLinesPerSplit = 0;
@@ -170,10 +171,11 @@ public class MapRedFalsePositiveRateTest
 
             //Take bloomFilterFile path parameter
             job.getConfiguration().set("pathBloomFiltersFile", otherArgs[13]);
+            System.out.println("args[13]: <path_bloom_filters_file>=" + otherArgs[13]);
         }
         catch(NumberFormatException e){
             e.printStackTrace();
-            System.err.println("Usage: BloomFilter <input> <output> <num_lines_per_split> <items_count_per_rate>{10 times}");
+            System.err.println("Usage: BloomFilter <input> <output> <num_lines_per_split> <items_count_per_rate>{10 times} <path_bloom_filters_file>");
             System.exit(1);
         }
         
