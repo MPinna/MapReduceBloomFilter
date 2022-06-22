@@ -69,12 +69,15 @@ public class MapRedFalsePositiveRateTest
 
         private static final int[] rateItemsCount = new int[UtilityConstants.NUM_OF_RATES];
 
+        //Reducer output value containing false positive rate
         private static final FloatWritable outputValue = new FloatWritable(); 
 
         @Override
         public void setup(Context context) throws IOException, InterruptedException
         {
             logger = Logger.getLogger(MapRedFalsePositiveRateTestReducer.class.getName());
+
+            // Get number of items for each rate (from job configuration)
             for (short i = 0; i<UtilityConstants.NUM_OF_RATES; ++i)
                 rateItemsCount[i] = context.getConfiguration().getInt("rateCount"+(i+1), UtilityConstants.DEFAULT_COUNT_PER_RATE);
         }

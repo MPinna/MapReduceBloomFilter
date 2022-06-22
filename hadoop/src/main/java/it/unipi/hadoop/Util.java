@@ -51,7 +51,7 @@ public class Util {
         // Get rating
         try{
             float rating = Float.parseFloat(tokens[ 1]); 
-
+            // Compute rounded rate
             index = Math.round(rating);
             if (index < UtilityConstants.MIN_RATE || index > (float) UtilityConstants.MAX_RATE){
                 return null;
