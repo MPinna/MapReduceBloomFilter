@@ -50,34 +50,6 @@ public class MapRedBloomFilter
         public void map(Object key, Text value, Context context) 
                 throws IOException, InterruptedException 
         {
-            /*// Get raw input values
-            String tokens[] = value.toString().split("\t+");
-            
-            // Check format (last value is discarded)
-            if (tokens.length != 3) {
-                return;
-            }
-
-            String movieId = null;
-            int index = -1;
-            
-            // Get movie id
-            movieId = tokens[0];
-            if(movieId == null){
-                return;
-            }
-
-            // Get rating
-            try{
-                float rating = Float.parseFloat(tokens[1]); 
-                index = Math.round(rating);
-                if (index < 1 || index > 10){
-                    return;
-                }
-            }
-            catch(NumberFormatException e){
-                return;
-            }*/
 
             Object[] tokens = Util.parseInput(value.toString());  
             if (tokens == null){
@@ -137,6 +109,8 @@ public class MapRedBloomFilter
 
     public static class MapRedBloomFilterMapperWithIndexes extends Mapper<Object, Text, IntWritable, ArrayPrimitiveWritable> 
     {
+        private static Logger logger;
+
         // Number of hash functions to be computed
         private static int k;
         // Vector containg the dimensions in bit of each BloomFilter
@@ -148,6 +122,7 @@ public class MapRedBloomFilter
 
         public void setup(Context context) throws IOException, InterruptedException
         {
+            logger = Logger.getLogger(MapRedBloomFilterMapperWithIndexes.class.getName());
             // Set k and m BloomFilter parameters (from job configuration)
             k = context.getConfiguration().getInt("k_param", UtilityConstants.DEFAULT_K);
             for (int i = 0; i< UtilityConstants.NUM_OF_RATES; ++i)
@@ -155,49 +130,36 @@ public class MapRedBloomFilter
         }
 
         public void map(final Object key, final Text value, final Context context)
-                throws IOException, InterruptedException {
+                throws IOException, InterruptedException 
+        {
+            // Get input values and check correctness in length and type
+            String record = value.toString();
+            if (record == null || record.length() == 0){
+                logger.info(String.format("Invalid entry: %s", record));
+                return;  
+            }
+
+            Object[] tokens = Util.parseInput(record);  
+            if (tokens == null){
+                logger.info(String.format("Invalid entry: %s", record));
+                return;  
+            }
+
+            String movieId  = (String) tokens[0]; 
+            int roundedRate = (int) tokens[1];
             
-                    // Get input values and check correctness in length and type
-                    String record = value.toString();
-                    if (record == null || record.length() == 0)
-                        return;
+            // Compute k hash functions
+            int[] hashValue = BloomFilter.computeHash(k, movieId, m[roundedRate - 1]);
 
-                    String[] tokens = record.split("\t+");
+            // Set Map key
+            rate.set(roundedRate);
 
-                    if (tokens.length == 3) {
-                        String movieId = null;
-                        float rawRate;
+            // Set Map value
+            hashesValue.set(hashValue);
 
-                        movieId= tokens[0];
-                        if(movieId == null){
-                            return;
-                        }
-
-                        try{
-                            rawRate = Float.parseFloat(tokens[1]);
-                        }
-                        catch(NumberFormatException e){
-                            return;
-                        }
-                        if (rawRate < (float) UtilityConstants.MIN_RATE || rawRate > (float) UtilityConstants.MAX_RATE){
-                            return;
-                        }
-                        
-                        // Compute rounded rate
-                        int roundedRate = Math.round(rawRate);
-
-                        // Compute k hash functions
-                        int[] hashValue = BloomFilter.computeHash(k, movieId, m[roundedRate - 1]);
-
-                        // Set Map key
-                        rate.set(roundedRate);
-
-                        // Set Map value
-                        hashesValue.set(hashValue);
-
-                        // Emit rating and values of the k hash functions
-                        context.write(rate, hashesValue);
-                    }
+            // Emit rating and values of the k hash functions
+            context.write(rate, hashesValue);
+                
         }
     }
 
