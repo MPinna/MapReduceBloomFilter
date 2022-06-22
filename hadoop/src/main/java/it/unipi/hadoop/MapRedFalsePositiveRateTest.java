@@ -14,6 +14,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.ArrayPrimitiveWritable;
 import org.apache.hadoop.io.FloatWritable;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
@@ -28,19 +29,22 @@ import org.apache.hadoop.util.GenericOptionsParser;
 
 public class MapRedFalsePositiveRateTest
 {
-    public static class MapRedFalsePositiveRateTestMapper extends Mapper<Object, Text, IntWritable, IntWritable> 
+    public static class MapRedFalsePositiveRateTestMapper extends Mapper<Object, Text, IntWritable, ArrayPrimitiveWritable> 
     { 
         //Since we don't know if there are all 10 bloomfilters and are ordered by rating, an hashmap is used
         private HashMap<Integer, BloomFilter> bloomFiltersByRating; 
         private Logger logger;
         private static int[] false_positive_count = new int[UtilityConstants.NUM_OF_RATES];
+        private static int[] film_by_rating_count = new int[UtilityConstants.NUM_OF_RATES];
+        
         private static String pathBloomFilterFile;
         private static String defaultFS;
         private static FileSystem fileSystem;
 
         private static IntWritable key = new IntWritable();
-        private static IntWritable value = new IntWritable();
-        
+        private static ArrayPrimitiveWritable value = new ArrayPrimitiveWritable();
+        private static int[] value_not_writable = new int[2];
+
         @Override
         public void setup(Context context) throws IOException, InterruptedException
         {
@@ -73,27 +77,35 @@ public class MapRedFalsePositiveRateTest
                 throws IOException, InterruptedException {
                     
             Object[] tokens = Util.parseInput(value.toString());  
-
             if (tokens == null){
                 logger.info(String.format("Invalid entry: %s", value.toString()));
                 return;  
             }
 
             //Test movie presence on all BloomFilters
-            int currRating;
+            int movieRating = (int) tokens[1];
+            int currBloomFilterRating;
             for(int i=0; i<UtilityConstants.NUM_OF_RATES; i++){
-                currRating = i+1;
-                boolean testResult = bloomFiltersByRating.get(currRating).test((String)tokens[0]);
-                if(testResult && (int) tokens[1] != currRating)
+                currBloomFilterRating = i+1;
+                boolean testResult = bloomFiltersByRating.get(currBloomFilterRating).test((String)tokens[0]);
+                if(testResult && (int) movieRating != currBloomFilterRating)
                     false_positive_count[i]++;
             }
+
+            film_by_rating_count[(int) movieRating-1]++;
         }
 
         @Override
         public void cleanup(Context context) throws IOException, InterruptedException{
+
+            //Emitted value is an ArrayPrimitiveWritable 
+            //  index 0: false positive count with rating i,
+            //  index 1: total movie count with rating i
             for(int i=0; i<false_positive_count.length; i++){
                 key.set(i);
-                value.set(false_positive_count[i]);
+                value_not_writable[0] = false_positive_count[i];
+                value_not_writable[1] = film_by_rating_count[i];
+                value.set(value_not_writable);
                 context.write(key, value);
             }
         }
