@@ -140,7 +140,7 @@ public class MapRedFalsePositiveRateTest
         job.setJarByClass(MapRedFalsePositiveRateTest.class);
 
         String[] otherArgs = new GenericOptionsParser(conf, args).getRemainingArgs();
-        if (otherArgs.length != 16) {
+        if (otherArgs.length != 14) {
            System.err.println("Usage: BloomFilter <input> <output> <num_lines_per_split> <items_count_per_rate>{10 times} <path_bloom_filters_file>");//TODO 10 times or 10 ?
            System.exit(1);
         }
