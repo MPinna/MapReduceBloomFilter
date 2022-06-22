@@ -5,8 +5,17 @@ public class Util {
         //Constant value for number of possible different rounded rates
         public static final int NUM_OF_RATES = 10;
     
+        //Constant value for the maximum allowed value for rate
+        public static final int MAX_RATE = 10;
+
+        //Constant value for the minimum allowed value for rate
+        public static final int MIN_RATE = 1;
+
         //Constant value for BloomFilter required false positive rate
         public static final float FALSE_POSITIVE_RATE = (float) 0.01; //1%
+
+        //Constant value for items count per rate
+        public static final int DEFAULT_COUNT_PER_RATE = 1; 
         
         //Constant values for implementation versions name
         public static final String[] NAME_OF_VERSIONS = {"WithIndexes","WithBloomFilters"};    
@@ -44,7 +53,7 @@ public class Util {
             float rating = Float.parseFloat(tokens[ 1]); 
 
             index = Math.round(rating);
-            if (index < 1 || index > 10){
+            if (index < UtilityConstants.MIN_RATE || index > (float) UtilityConstants.MAX_RATE){
                 return null;
             }
         }
