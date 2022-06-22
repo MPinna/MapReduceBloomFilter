@@ -14,6 +14,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.ArrayPrimitiveWritable;
 import org.apache.hadoop.io.FloatWritable;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
@@ -28,29 +29,39 @@ import org.apache.hadoop.util.GenericOptionsParser;
 
 public class MapRedFalsePositiveRateTest
 {
-    public static class MapRedFalsePositiveRateTestMapper extends Mapper<Object, Text, IntWritable, IntWritable> 
+    public static class MapRedFalsePositiveRateTestMapper extends Mapper<Object, Text, IntWritable, ArrayPrimitiveWritable> 
     { 
         //Since we don't know if there are all 10 bloomfilters and are ordered by rating, an hashmap is used
         private HashMap<Integer, BloomFilter> bloomFiltersByRating; 
         private Logger logger;
-        private int[] false_positive_count;
+        private static int[] false_positive_count = new int[UtilityConstants.NUM_OF_RATES];
+        private static int[] film_by_rating_count = new int[UtilityConstants.NUM_OF_RATES];
+        
         private static String pathBloomFilterFile;
+        private static String defaultFS;
+        private static FileSystem fileSystem;
+
+        private static IntWritable key = new IntWritable();
+        private static ArrayPrimitiveWritable value = new ArrayPrimitiveWritable();
+        private static int[] value_not_writable = new int[2];
 
         @Override
         public void setup(Context context) throws IOException, InterruptedException
         {
             logger = Logger.getLogger(MapRedFalsePositiveRateTestMapper.class.getName());
-            false_positive_count = new int[UtilityConstants.NUM_OF_RATES];
             bloomFiltersByRating = new HashMap<Integer, BloomFilter>();
             pathBloomFilterFile = context.getConfiguration().get("pathBloomFiltersFile");
-
+            defaultFS = context.getConfiguration().get("defaultFS");
+            
             //Load bloomFilters from HDFS
             Configuration configuration = new Configuration();
-            configuration.set("fs.defaultFS", "hdfs://localhost:9000");   
-            FileSystem fileSystem = FileSystem.get(configuration);
+            configuration.setBoolean("fs.hdfs.impl.disable.cache", true);
+            configuration.set("fs.defaultFS", "hdfs://"+defaultFS+":9000");   
+            fileSystem = FileSystem.get(configuration);
             FSDataInputStream inputStream = fileSystem.open(new Path(pathBloomFilterFile));
             BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
 
+            //Initialize BloomFilter objects
             String line = null;
             BloomFilter tempBloomFilter;
             while ((line=bufferedReader.readLine())!=null){
@@ -66,24 +77,36 @@ public class MapRedFalsePositiveRateTest
                 throws IOException, InterruptedException {
                     
             Object[] tokens = Util.parseInput(value.toString());  
-
             if (tokens == null){
                 logger.info(String.format("Invalid entry: %s", value.toString()));
                 return;  
             }
 
             //Test movie presence on all BloomFilters
-            for(int i=1; i<=UtilityConstants.NUM_OF_RATES; i++){
-                boolean testResult = bloomFiltersByRating.get(i).test((String)tokens[0]);
-                if(testResult)
+            int movieRating = (int) tokens[1];
+            int currBloomFilterRating;
+            for(int i=0; i<UtilityConstants.NUM_OF_RATES; i++){
+                currBloomFilterRating = i+1;
+                boolean testResult = bloomFiltersByRating.get(currBloomFilterRating).test((String)tokens[0]);
+                if(testResult && (int) movieRating != currBloomFilterRating)
                     false_positive_count[i]++;
             }
+
+            film_by_rating_count[(int) movieRating-1]++;
         }
 
         @Override
         public void cleanup(Context context) throws IOException, InterruptedException{
-            for(int i=0; i<false_positive_count.length; i++){
-                context.write(new IntWritable(i), new IntWritable(false_positive_count[i]));
+
+            //Emitted value is an ArrayPrimitiveWritable 
+            //  index 0: false positive count with rating i,
+            //  index 1: total movie count with rating i
+            for(int i=0; i<UtilityConstants.NUM_OF_RATES; i++){
+                key.set(i+1); //Ratings start from 1
+                value_not_writable[0] = false_positive_count[i];
+                value_not_writable[1] = film_by_rating_count[i];
+                value.set(value_not_writable);
+                context.write(key, value);
             }
         }
     }
@@ -140,14 +163,13 @@ public class MapRedFalsePositiveRateTest
         job.setJarByClass(MapRedFalsePositiveRateTest.class);
 
         String[] otherArgs = new GenericOptionsParser(conf, args).getRemainingArgs();
-        if (otherArgs.length != 16) {
-           System.err.println("Usage: BloomFilter <input> <output> <num_lines_per_split> <items_count_per_rate>{10 times} <path_bloom_filters_file>");//TODO 10 times or 10 ?
+        if (otherArgs.length != 14 && otherArgs.length != 15) {
+           System.err.println("Usage: BloomFilter <input> <output> <num_lines_per_split> <items_count_per_rate>{10 times} <path_bloom_filters_file> [<defaultFS> = \"localhost\"]");//TODO 10 times or 10 ?
            System.exit(1);
         }
         //Print input and output file path
         System.out.println("args[0]: <input>="  + otherArgs[0]);
         System.out.println("args[1]: <output>=" + otherArgs[1]);
-        System.out.println("args[13]: <path_bloom_filters_file>=" + otherArgs[13]);
 
         // Get invocation parameters
         int numLinesPerSplit = 0;
@@ -170,10 +192,19 @@ public class MapRedFalsePositiveRateTest
 
             //Take bloomFilterFile path parameter
             job.getConfiguration().set("pathBloomFiltersFile", otherArgs[13]);
+            System.out.println("args[13]: <path_bloom_filters_file>=" + otherArgs[13]);
+
+            //Take defaultFS parameter (if missing "localhost" will be the default value)
+            if(otherArgs.length == 15){
+                job.getConfiguration().set("defaultFS", otherArgs[14]);
+                System.out.println("args[14]: <defaultFS>=" + otherArgs[14]);
+            } else {
+                job.getConfiguration().set("defaultFS", "localhost");
+            }
         }
         catch(NumberFormatException e){
             e.printStackTrace();
-            System.err.println("Usage: BloomFilter <input> <output> <num_lines_per_split> <items_count_per_rate>{10 times}");
+            System.err.println("Usage: BloomFilter <input> <output> <num_lines_per_split> <items_count_per_rate>{10 times} <path_bloom_filters_file> [<defaultFS> = \"localhost\"]");//TODO 10 times or 10 ?
             System.exit(1);
         }
         
