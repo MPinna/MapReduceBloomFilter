@@ -179,7 +179,7 @@ public class MapRedBloomFilter
                         catch(NumberFormatException e){
                             return;
                         }
-                        if (rawRate < 1.0 || rawRate > 10.0){
+                        if (rawRate < (float) UtilityConstants.MIN_RATE || rawRate > (float) UtilityConstants.MAX_RATE){
                             return;
                         }
                         
@@ -195,7 +195,7 @@ public class MapRedBloomFilter
                         // Set Map value
                         hashesValue.set(hashValue);
 
-                        // Emit rating e values of the k hash functions
+                        // Emit rating and values of the k hash functions
                         context.write(rate, hashesValue);
                     }
         }
@@ -265,13 +265,17 @@ public class MapRedBloomFilter
         try{
             //Take num_lines_per_split parameter
             numLinesPerSplit = Integer.parseInt(otherArgs[2]);
+            System.out.println("args[2]: <lines per split>="  + otherArgs[2]);
             
             //Take ten values of m parameter
-            for(short i = 0; i<UtilityConstants.NUM_OF_RATES; ++i)
+            for(short i = 0; i<UtilityConstants.NUM_OF_RATES; ++i){
                 m_value[i] = Integer.parseInt(otherArgs[3+i]);
+                System.out.println("args["+(3+i)+"]: <m_"+(i+1)+">="  + otherArgs[3+i]);
+            }
             
             //Take k value
             k_value = Integer.parseInt(otherArgs[13]);
+            System.out.println("args[13]: <k>="  + otherArgs[13]);
         }
         catch(NumberFormatException e){
             e.printStackTrace();
@@ -280,6 +284,8 @@ public class MapRedBloomFilter
         }
         //Take implementation version to be executed
         String version = otherArgs[14];
+        System.out.println("args[14]: <version>="  + otherArgs[14]);
+        
         if(!version.equalsIgnoreCase(UtilityConstants.NAME_OF_VERSIONS[0]) &&  
             !version.equalsIgnoreCase(UtilityConstants.NAME_OF_VERSIONS[1])){
                 System.err.println("Invalide <version> parameter. Options:"+
@@ -334,7 +340,7 @@ public class MapRedBloomFilter
        
         NLineInputFormat.setNumLinesPerSplit(job, numLinesPerSplit);     
         FileInputFormat.addInputPath(job, new Path(otherArgs[0]));
-        FileOutputFormat.setOutputPath(job, new Path(args[1]));// TODO: args or otherArgs ?
+        FileOutputFormat.setOutputPath(job, new Path(otherArgs[1]));
 
         System.exit(job.waitForCompletion(true) ? 0 : 1);
     }
