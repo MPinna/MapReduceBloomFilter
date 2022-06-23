@@ -39,6 +39,7 @@ public class MapRedFalsePositiveRateTest
         
         private static String pathBloomFilterFile;
         private static String defaultFS;
+        private static String defaultFSPort;
         private static FileSystem fileSystem;
 
         private static IntWritable key = new IntWritable();
@@ -52,11 +53,12 @@ public class MapRedFalsePositiveRateTest
             bloomFiltersByRating = new HashMap<Integer, BloomFilter>();
             pathBloomFilterFile = context.getConfiguration().get("pathBloomFiltersFile");
             defaultFS = context.getConfiguration().get("defaultFS");
-            
+            defaultFSPort = context.getConfiguration().get("defaultFSPort");
+
             //Load bloomFilters from HDFS
             Configuration configuration = new Configuration();
             configuration.setBoolean("fs.hdfs.impl.disable.cache", true);
-            configuration.set("fs.defaultFS", "hdfs://"+defaultFS+":9000");   
+            configuration.set("fs.defaultFS", "hdfs://"+defaultFS+":"+defaultFSPort);   
             fileSystem = FileSystem.get(configuration);
             FSDataInputStream inputStream = fileSystem.open(new Path(pathBloomFilterFile));
             BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
@@ -173,7 +175,7 @@ public class MapRedFalsePositiveRateTest
         job.setJarByClass(MapRedFalsePositiveRateTest.class);
 
         String[] otherArgs = new GenericOptionsParser(conf, args).getRemainingArgs();
-        if (otherArgs.length != 4 && otherArgs.length != 5) {
+        if (otherArgs.length != 4 && otherArgs.length != 5 && otherArgs.length != 6) {
            System.err.println("Usage: BloomFilter <input> <output> <num_lines_per_split> <path_bloom_filters_file> [<defaultFS> = \"localhost\"]");//TODO 10 times or 10 ?
            System.exit(1);
         }
@@ -194,11 +196,14 @@ public class MapRedFalsePositiveRateTest
             System.out.println("args[3]: <path_bloom_filters_file>=" + otherArgs[3]);
 
             //Take defaultFS parameter (if missing "localhost" will be the default value)
-            if(otherArgs.length == 5){
+            if(otherArgs.length == 6){
                 job.getConfiguration().set("defaultFS", otherArgs[4]);
                 System.out.println("args[4]: <defaultFS>=" + otherArgs[4]);
+                job.getConfiguration().set("defaultFSPort", otherArgs[5]);
+                System.out.println("args[5]: <defaultFSPort>=" + otherArgs[5]);
             } else {
                 job.getConfiguration().set("defaultFS", "localhost");
+                job.getConfiguration().set("defaultFSPort", "9000");
             }
         }
         catch(NumberFormatException e){
