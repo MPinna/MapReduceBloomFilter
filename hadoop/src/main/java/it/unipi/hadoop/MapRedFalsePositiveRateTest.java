@@ -127,8 +127,8 @@ public class MapRedFalsePositiveRateTest
         public void reduce(final IntWritable key, final Iterable<ArrayPrimitiveWritable> values, final Context context)
                 throws IOException, InterruptedException {
                     int rate = key.get();
-                    int countOfPresentItems = 0;
-                    int falsePositiveCount = 0;
+                    int trueNegativeCounter = 0;
+                    int falsePositiveCounter = 0;
 
                     for (final ArrayPrimitiveWritable val : values) {
                         int[] counter = (int[]) val.get();
@@ -139,8 +139,8 @@ public class MapRedFalsePositiveRateTest
                             continue;
                         }
                         // Aggregate all the counters received from each mapper for a given key
-                        falsePositiveCount += counter[0];
-                        countOfPresentItems += counter[1];
+                        falsePositiveCounter += counter[0];
+                        trueNegativeCounter += counter[1];
                     }
 
                     //Check key validity
@@ -150,14 +150,14 @@ public class MapRedFalsePositiveRateTest
                     }
 
                     // Check not to divide by zero
-                    if(countOfPresentItems == 0){
-                        logger.info(String.format("Invalid number of present items for key %s: %s", key.toString(), String.valueOf(countOfPresentItems)));
+                    if((trueNegativeCounter + falsePositiveCounter) == 0){
+                        logger.info(String.format("Invalid number of true negative for key %s: %s", key.toString(), String.valueOf(trueNegativeCounter)));
                         return;
                     }
 
                     // Compute false positive rate
                     //TODO check rateItemsCount?
-                    float falsePositiveRate = (float)falsePositiveCount/(float)countOfPresentItems;
+                    float falsePositiveRate = (float)falsePositiveCounter/(float)(trueNegativeCounter + falsePositiveCounter);
                     outputValue.set(falsePositiveRate);
 
                     //TODO is it ok to reuse the received key?  
