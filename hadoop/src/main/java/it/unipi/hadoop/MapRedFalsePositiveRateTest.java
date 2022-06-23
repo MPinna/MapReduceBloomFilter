@@ -91,7 +91,7 @@ public class MapRedFalsePositiveRateTest
                 if(testResult && (int) movieRating != currBloomFilterRating)
                     false_positive_count[i]++;
                 if(currBloomFilterRating!=movieRating)
-                    true_negative_count[currBloomFilterRating]++;        
+                    true_negative_count[i]++;        
             }   
         }
 
