@@ -35,7 +35,7 @@ public class MapRedFalsePositiveRateTest
         private HashMap<Integer, BloomFilter> bloomFiltersByRating; 
         private Logger logger;
         private static int[] false_positive_count = new int[UtilityConstants.NUM_OF_RATES];
-        private static int[] film_by_rating_count = new int[UtilityConstants.NUM_OF_RATES];
+        private static int[] true_negative_count = new int[UtilityConstants.NUM_OF_RATES];
         
         private static String pathBloomFilterFile;
         private static String defaultFS;
@@ -90,9 +90,9 @@ public class MapRedFalsePositiveRateTest
                 boolean testResult = bloomFiltersByRating.get(currBloomFilterRating).test((String)tokens[0]);
                 if(testResult && (int) movieRating != currBloomFilterRating)
                     false_positive_count[i]++;
-            }
-
-            film_by_rating_count[(int) movieRating-1]++;
+                if(currBloomFilterRating!=movieRating)
+                    true_negative_count[currBloomFilterRating]++;        
+            }   
         }
 
         @Override
@@ -100,11 +100,11 @@ public class MapRedFalsePositiveRateTest
 
             //Emitted value is an ArrayPrimitiveWritable 
             //  index 0: false positive count with rating i,
-            //  index 1: total movie count with rating i
+            //  index 1: true negative count with rating i
             for(int i=0; i<UtilityConstants.NUM_OF_RATES; i++){
                 key.set(i+1); //Ratings start from 1
                 value_not_writable[0] = false_positive_count[i];
-                value_not_writable[1] = film_by_rating_count[i];
+                value_not_writable[1] = true_negative_count[i];
                 value.set(value_not_writable);
                 context.write(key, value);
             }
