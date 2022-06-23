@@ -112,10 +112,8 @@ public class MapRedFalsePositiveRateTest
     }
     
 
-    public static class MapRedFalsePositiveRateTestReducer extends Reducer<IntWritable, IntWritable, IntWritable, FloatWritable> {
+    public static class MapRedFalsePositiveRateTestReducer extends Reducer<IntWritable, ArrayPrimitiveWritable, IntWritable, FloatWritable> {
         private Logger logger;
-
-        private static final int[] rateItemsCount = new int[UtilityConstants.NUM_OF_RATES];
 
         //Reducer output value containing false positive rate
         private static final FloatWritable outputValue = new FloatWritable(); 
@@ -124,30 +122,42 @@ public class MapRedFalsePositiveRateTest
         public void setup(Context context) throws IOException, InterruptedException
         {
             logger = Logger.getLogger(MapRedFalsePositiveRateTestReducer.class.getName());
-
-            // Get number of items for each rate (from job configuration)
-            for (short i = 0; i<UtilityConstants.NUM_OF_RATES; ++i)
-                rateItemsCount[i] = context.getConfiguration().getInt("rateCount"+(i+1), UtilityConstants.DEFAULT_COUNT_PER_RATE);
         }
 
-        public void reduce(final IntWritable key, final IntWritable values, final Context context)
+        public void reduce(final IntWritable key, final Iterable<ArrayPrimitiveWritable> values, final Context context)
                 throws IOException, InterruptedException {
                     int rate = key.get();
-                    int countOfPresentItems = values.get();
+                    int countOfPresentItems = 0;
+                    int falsePositiveCount = 0;
 
-                    //Check for key and value
+                    for (final ArrayPrimitiveWritable val : values) {
+                        int[] counter = (int[]) val.get();
+                        // Check values validity
+                        if(counter[0]<0 || counter[1]<0){
+                            logger.info(String.format("Invalid received counters: %s, %s", String.valueOf(counter[0]), String.valueOf(counter[1])));
+                            //TODO: continue or return?
+                            continue;
+                        }
+                        // Aggregate all the counters received from each mapper for a given key
+                        falsePositiveCount += counter[0];
+                        countOfPresentItems += counter[1];
+                    }
+
+                    //Check key validity
                     if(rate < UtilityConstants.MIN_RATE || rate > UtilityConstants.MAX_RATE){
                         logger.info(String.format("Invalid received rate: %s", key.toString()));
                         return;
                     }
-                    if(countOfPresentItems<0){
-                        logger.info(String.format("Invalid received count of present items: %s", values.toString()));
+
+                    // Check not to divide by zero
+                    if(countOfPresentItems == 0){
+                        logger.info(String.format("Invalid number of present items for key %s: %s", key.toString(), String.valueOf(countOfPresentItems)));
                         return;
                     }
 
                     // Compute false positive rate
                     //TODO check rateItemsCount?
-                    float falsePositiveRate = (float)countOfPresentItems/(float)rateItemsCount[rate - 1];
+                    float falsePositiveRate = (float)falsePositiveCount/(float)countOfPresentItems;
                     outputValue.set(falsePositiveRate);
 
                     //TODO is it ok to reuse the received key?  
@@ -163,8 +173,8 @@ public class MapRedFalsePositiveRateTest
         job.setJarByClass(MapRedFalsePositiveRateTest.class);
 
         String[] otherArgs = new GenericOptionsParser(conf, args).getRemainingArgs();
-        if (otherArgs.length != 14 && otherArgs.length != 15) {
-           System.err.println("Usage: BloomFilter <input> <output> <num_lines_per_split> <items_count_per_rate>{10 times} <path_bloom_filters_file> [<defaultFS> = \"localhost\"]");//TODO 10 times or 10 ?
+        if (otherArgs.length != 4 && otherArgs.length != 5) {
+           System.err.println("Usage: BloomFilter <input> <output> <num_lines_per_split> <path_bloom_filters_file> [<defaultFS> = \"localhost\"]");//TODO 10 times or 10 ?
            System.exit(1);
         }
         //Print input and output file path
@@ -173,31 +183,20 @@ public class MapRedFalsePositiveRateTest
 
         // Get invocation parameters
         int numLinesPerSplit = 0;
-        int[] itemsCountPerRate = new int[UtilityConstants.NUM_OF_RATES];
 
         try{
             //Take num_lines_per_split parameter
             numLinesPerSplit = Integer.parseInt(otherArgs[2]);
             System.out.println("args[2]: <lines per split>="  + otherArgs[2]);
-            
-            //Take ten values of m parameter
-            for(short i = 0; i<UtilityConstants.NUM_OF_RATES; ++i){
-                itemsCountPerRate[i] = Integer.parseInt(otherArgs[3+i]);
-                //TODO: Here or in another for loop
-                //items count value for each rating passed as configuration parameters
-                job.getConfiguration().set("rateCount"+(i+1), String.valueOf(itemsCountPerRate[i]));
-                
-                System.out.println("args["+(3+i)+"]: <items_Count_Per_Rate_"+(i+1)+">="  + otherArgs[3+i]);
-            }
 
             //Take bloomFilterFile path parameter
-            job.getConfiguration().set("pathBloomFiltersFile", otherArgs[13]);
-            System.out.println("args[13]: <path_bloom_filters_file>=" + otherArgs[13]);
+            job.getConfiguration().set("pathBloomFiltersFile", otherArgs[3]);
+            System.out.println("args[3]: <path_bloom_filters_file>=" + otherArgs[3]);
 
             //Take defaultFS parameter (if missing "localhost" will be the default value)
-            if(otherArgs.length == 15){
-                job.getConfiguration().set("defaultFS", otherArgs[14]);
-                System.out.println("args[14]: <defaultFS>=" + otherArgs[14]);
+            if(otherArgs.length == 5){
+                job.getConfiguration().set("defaultFS", otherArgs[4]);
+                System.out.println("args[4]: <defaultFS>=" + otherArgs[4]);
             } else {
                 job.getConfiguration().set("defaultFS", "localhost");
             }

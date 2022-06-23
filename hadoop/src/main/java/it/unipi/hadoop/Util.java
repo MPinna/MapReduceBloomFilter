@@ -12,10 +12,7 @@ public class Util {
         public static final int MIN_RATE = 1;
 
         //Constant value for BloomFilter required false positive rate
-        public static final float FALSE_POSITIVE_RATE = (float) 0.01; //1%
-
-        //Constant value for items count per rate
-        public static final int DEFAULT_COUNT_PER_RATE = 1; 
+        public static final float FALSE_POSITIVE_RATE = (float) 0.01; //1% 
         
         //Constant values for implementation versions name
         public static final String[] NAME_OF_VERSIONS = {"WithIndexes","WithBloomFilters"};    
