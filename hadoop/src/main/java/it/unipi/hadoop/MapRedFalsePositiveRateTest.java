@@ -101,8 +101,8 @@ public class MapRedFalsePositiveRateTest
             //Emitted value is an ArrayPrimitiveWritable 
             //  index 0: false positive count with rating i,
             //  index 1: total movie count with rating i
-            for(int i=0; i<false_positive_count.length; i++){
-                key.set(i);
+            for(int i=0; i<UtilityConstants.NUM_OF_RATES; i++){
+                key.set(i+1); //Ratings start from 1
                 value_not_writable[0] = false_positive_count[i];
                 value_not_writable[1] = film_by_rating_count[i];
                 value.set(value_not_writable);
