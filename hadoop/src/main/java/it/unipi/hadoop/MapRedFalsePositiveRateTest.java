@@ -213,7 +213,7 @@ public class MapRedFalsePositiveRateTest
 
         //Define type of mapper's key-value output pair
         job.setMapOutputKeyClass(IntWritable.class);
-        job.setMapOutputValueClass(IntWritable.class);
+        job.setMapOutputValueClass(ArrayPrimitiveWritable.class);
         
         //Define type of reducer's key-value output pair
         job.setOutputKeyClass(IntWritable.class);
