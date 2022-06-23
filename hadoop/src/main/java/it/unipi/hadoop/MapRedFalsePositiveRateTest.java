@@ -35,7 +35,7 @@ public class MapRedFalsePositiveRateTest
         private HashMap<Integer, BloomFilter> bloomFiltersByRating; 
         private Logger logger;
         private static int[] false_positive_count = new int[UtilityConstants.NUM_OF_RATES];
-        private static int[] film_by_rating_count = new int[UtilityConstants.NUM_OF_RATES];
+        private static int[] true_negative_count = new int[UtilityConstants.NUM_OF_RATES];
         
         private static String pathBloomFilterFile;
         private static String defaultFS;
@@ -90,9 +90,9 @@ public class MapRedFalsePositiveRateTest
                 boolean testResult = bloomFiltersByRating.get(currBloomFilterRating).test((String)tokens[0]);
                 if(testResult && (int) movieRating != currBloomFilterRating)
                     false_positive_count[i]++;
-            }
-
-            film_by_rating_count[(int) movieRating-1]++;
+                if(currBloomFilterRating!=movieRating)
+                    true_negative_count[i]++;        
+            }   
         }
 
         @Override
@@ -100,11 +100,11 @@ public class MapRedFalsePositiveRateTest
 
             //Emitted value is an ArrayPrimitiveWritable 
             //  index 0: false positive count with rating i,
-            //  index 1: total movie count with rating i
+            //  index 1: true negative count with rating i
             for(int i=0; i<UtilityConstants.NUM_OF_RATES; i++){
                 key.set(i+1); //Ratings start from 1
                 value_not_writable[0] = false_positive_count[i];
-                value_not_writable[1] = film_by_rating_count[i];
+                value_not_writable[1] = true_negative_count[i];
                 value.set(value_not_writable);
                 context.write(key, value);
             }
@@ -127,8 +127,8 @@ public class MapRedFalsePositiveRateTest
         public void reduce(final IntWritable key, final Iterable<ArrayPrimitiveWritable> values, final Context context)
                 throws IOException, InterruptedException {
                     int rate = key.get();
-                    int countOfPresentItems = 0;
-                    int falsePositiveCount = 0;
+                    int trueNegativeCounter = 0;
+                    int falsePositiveCounter = 0;
 
                     for (final ArrayPrimitiveWritable val : values) {
                         int[] counter = (int[]) val.get();
@@ -139,8 +139,8 @@ public class MapRedFalsePositiveRateTest
                             continue;
                         }
                         // Aggregate all the counters received from each mapper for a given key
-                        falsePositiveCount += counter[0];
-                        countOfPresentItems += counter[1];
+                        falsePositiveCounter += counter[0];
+                        trueNegativeCounter += counter[1];
                     }
 
                     //Check key validity
@@ -150,14 +150,14 @@ public class MapRedFalsePositiveRateTest
                     }
 
                     // Check not to divide by zero
-                    if(countOfPresentItems == 0){
-                        logger.info(String.format("Invalid number of present items for key %s: %s", key.toString(), String.valueOf(countOfPresentItems)));
+                    if((trueNegativeCounter + falsePositiveCounter) == 0){
+                        logger.info(String.format("Invalid number of true negative for key %s: %s", key.toString(), String.valueOf(trueNegativeCounter)));
                         return;
                     }
 
                     // Compute false positive rate
                     //TODO check rateItemsCount?
-                    float falsePositiveRate = (float)falsePositiveCount/(float)countOfPresentItems;
+                    float falsePositiveRate = (float)falsePositiveCounter/(float)(trueNegativeCounter + falsePositiveCounter);
                     outputValue.set(falsePositiveRate);
 
                     //TODO is it ok to reuse the received key?  
