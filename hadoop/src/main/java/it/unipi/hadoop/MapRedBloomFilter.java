@@ -73,7 +73,7 @@ public class MapRedBloomFilter
 
     }
     
-    public static class MapRedBloomFilterReducerWithBloomFilters extends Reducer<IntWritable, BloomFilter, IntWritable, BloomFilter> {
+    public static class MapRedBloomFilterReducerWithBloomFilters extends Reducer<IntWritable, BloomFilter, NullWritable, BloomFilter> {
 
         private static int k;
         private static int[] m;
@@ -103,7 +103,7 @@ public class MapRedBloomFilter
                 bloomFilter.or(value);
             }
 
-            context.write(key, bloomFilter);
+            context.write(null, bloomFilter);
         }
     }
 
@@ -289,7 +289,7 @@ public class MapRedBloomFilter
             job.setMapOutputValueClass(BloomFilter.class);
         
             //Define type of reducer's key-value output pair
-            job.setOutputKeyClass(IntWritable.class);
+            job.setOutputKeyClass(NullWritable.class);
             job.setOutputValueClass(BloomFilter.class);
         }
 
