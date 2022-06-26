@@ -54,9 +54,13 @@ if __name__ == "__main__":
     # Create and populate bloomFilters per rating
     rows_mapped = rows.map(mapBF)
     
+    # Merge bloomFilters
     rows_reduced = rows_mapped.reduceByKey(reduce_bloomfilters)
+
     
-    print(f"[LOG] {rows_mapped.collect()}")
-    print("******************************************************************\n"*10)
-    print(f"[LOG] {rows_reduced.collect()}")
-     
+    # Prepare output to be written into HDFS
+    rows_reduced_sorted = rows_reduced.sortByKey()
+    output_rdd = rows_reduced_sorted.map(lambda x: str(x[1])) #save BloomFilter in json format
+    
+    # Save output on HDFS
+    output_rdd.saveAsTextFile(output_hdfs_path)
