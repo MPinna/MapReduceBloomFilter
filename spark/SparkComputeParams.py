@@ -2,6 +2,7 @@ import re
 import sys
 import decimal
 import numpy as np
+import util
 from pyspark import SparkContext
 
 MASTER_TYPES = ("yarn", "local", "local[*]", "local[N]")
@@ -16,13 +17,6 @@ def getRate(line:str):
     #Split is performed by default on spaces, \t and \n (even consecutive)
     return line.split()[1]
 
-
-"""
-Compute numerical round to integer in which *.5 is rounded to upper integer 
-"""
-def roundHalfUp(rawRate:str):
-    rate = int(decimal.Decimal(rawRate).quantize(decimal.Decimal('1'), rounding=decimal.ROUND_HALF_UP))
-    return rate
 
 
 if __name__ == "__main__":
