@@ -1,12 +1,8 @@
 import re
 import sys
-import decimal
 import numpy as np
 import util
 from pyspark import SparkContext
-
-MASTER_TYPES = ("yarn", "local", "local[*]", "local[N]")
-MASTER_TYPES_REGEX = "^(yarn|local|local\[([\*]|[1-9][0-9]*)\])$"
 
 
 """
@@ -27,8 +23,8 @@ if __name__ == "__main__":
     
     # Extract master flag and check its validity by means RegEx
     master = sys.argv[1]
-    if not re.search(MASTER_TYPES_REGEX,master):
-        print("Invalid master type. Select one from {0}".format(MASTER_TYPES),  file=sys.stderr)
+    if not re.search(util.MASTER_TYPES_REGEX,master):
+        print("Invalid master type. Select one from {0}".format(util.MASTER_TYPES),  file=sys.stderr)
         sys.exit(-1)
 
     # Initializing a SparkContext
@@ -46,7 +42,7 @@ if __name__ == "__main__":
 
     # From each row create key-value pairs (rounded_rate, 1)
     rawRates = rows.map(getRate)
-    rates = rawRates.map(lambda x: (roundHalfUp(x),1))
+    rates = rawRates.map(lambda x: (util.roundHalfUp(x),1))
 
     # For each key obtain the total number of occurrences
     counters = rates.reduceByKey(lambda x, y: x + y)
@@ -63,7 +59,7 @@ if __name__ == "__main__":
             m = np.ceil(-(k*n)/np.log(1-np.power(p, 1/k)))
         else:
             m = np.ceil((n * np.log(p)) / np.log(1 / np.power(2, np.log(2))))
-            k = roundHalfUp(np.log(2)*m/n)
+            k = util.roundHalfUp(np.log(2)*m/n)
         # Collect results in a list    
         output.append("{0}\t{1}\t{2}\t{3}\t{4}".format(rate,p,n,m,k))
 

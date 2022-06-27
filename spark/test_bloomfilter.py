@@ -1,4 +1,4 @@
-from bloomfilter import BloomFilter
+from BloomFilter import BloomFilter
 
 def printBloomFilter(bloom: BloomFilter):
     print(f"Rating: {bloom.rating}")
