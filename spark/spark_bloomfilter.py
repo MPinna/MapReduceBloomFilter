@@ -1,6 +1,7 @@
+import re
 import sys
 import util
-from bloomfilter import BloomFilter
+from BloomFilter import BloomFilter
 from pyspark import SparkContext, rdd
 from util import *
 
@@ -27,7 +28,7 @@ if __name__ == "__main__":
     
     #Parse cmd line input
     master = sys.argv[1]
-    if master not in MASTER_TYPES:
+    if not re.search(util.MASTER_TYPES_REGEX,master):
         print("Invalid master type. Select one from {0}".format(MASTER_TYPES),  file=sys.stderr)
         sys.exit(-1)
         
