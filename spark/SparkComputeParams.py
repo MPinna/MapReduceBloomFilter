@@ -1,6 +1,6 @@
+import math
 import re
 import sys
-import numpy as np
 import util
 from pyspark import SparkContext
 
@@ -13,6 +13,21 @@ def getRate(line:str):
     #Split is performed by default on spaces, \t and \n (even consecutive)
     return line.split()[1]
 
+"""
+Taken rate and number of relative items, compute m and k parameters and
+return string to be saved as output of the computation
+"""
+def computeParams(rate, n):
+    if len(sys.argv) == 6:
+        # k is contrained and passed as argument
+        k = int(sys.argv[5])
+        m = int(math.ceil(-(k*n)/math.log(1-math.pow(p, 1/k))))
+    else:
+        m = int(math.ceil((n * math.log(p)) / math.log(1 / math.power(2, math.log(2)))))
+        k = util.roundHalfUp(math.log(2)*m/n)
+    # Collect results in a string   
+    output = f"{rate}\t{p}\t{n}\t{m}\t{k}"
+    return output
 
 
 if __name__ == "__main__":
@@ -24,7 +39,7 @@ if __name__ == "__main__":
     # Extract master flag and check its validity by means RegEx
     master = sys.argv[1]
     if not re.search(util.MASTER_TYPES_REGEX,master):
-        print("Invalid master type. Select one from {0}".format(util.MASTER_TYPES),  file=sys.stderr)
+        print(f"Invalid master type. Select one from {util.MASTER_TYPES}",  file=sys.stderr)
         sys.exit(-1)
 
     # Initializing a SparkContext
@@ -34,6 +49,7 @@ if __name__ == "__main__":
     p = float(sys.argv[4])
 
     # Get input file
+    #TODO in this way or by hdfs?
     input = sc.textFile(sys.argv[2])
 
     # Remove header from input file
@@ -47,21 +63,8 @@ if __name__ == "__main__":
     # For each key obtain the total number of occurrences
     counters = rates.reduceByKey(lambda x, y: x + y)
 
-    # Perform action
-    rateAndCountPairs = counters.collect()
-    
     # For each rate compute k and m parameters
-    output=[]
-    for (rate, n) in rateAndCountPairs:
-        if len(sys.argv) == 6:
-            # k is contrained and passed as argument
-            k = int(sys.argv[5])
-            m = np.ceil(-(k*n)/np.log(1-np.power(p, 1/k)))
-        else:
-            m = np.ceil((n * np.log(p)) / np.log(1 / np.power(2, np.log(2))))
-            k = util.roundHalfUp(np.log(2)*m/n)
-        # Collect results in a list    
-        output.append("{0}\t{1}\t{2}\t{3}\t{4}".format(rate,p,n,m,k))
+    bloomFilterParams = counters.map(computeParams)
 
     # Write result in output file received as argument
-    sc.parallelize(output).saveAsTextFile(sys.argv[3])
+    bloomFilterParams.saveAsTextFile(sys.argv[3])
