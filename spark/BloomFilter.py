@@ -35,7 +35,8 @@ class BloomFilter:
                 return False
         return True
 
-    def computeHash(self, k: int, movieId: str, m: int):
+    @staticmethod
+    def computeHash(k: int, movieId: str, m: int):
         hashIndexes = [0 for i in range(k)]
         # print(f"HashIndexes (Before): {hashIndexes}")
         for i in range(k):
