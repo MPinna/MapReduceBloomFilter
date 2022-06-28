@@ -185,21 +185,22 @@ public class MapRedBloomFilter
         }
 
         public void reduce(final IntWritable key, final Iterable<ArrayPrimitiveWritable> values, final Context context)
-                throws IOException, InterruptedException {
-                    //Create BloomFilter for the given rating
-                    int rating = key.get();
-                    bloomFilter = new BloomFilter(rating, m[rating - 1], k, p);
-                   
-                    //Add indexes
-                    for(ArrayPrimitiveWritable value: values){
-                        int[] indexes = (int[]) value.get();
+                throws IOException, InterruptedException 
+        {
+            //Create BloomFilter for the given rating
+            int rating = key.get();
+            bloomFilter = new BloomFilter(rating, m[rating - 1], k, p);
+            
+            //Add indexes
+            for(ArrayPrimitiveWritable value: values){
+                int[] indexes = (int[]) value.get();
 
-                        for(int i=0; i<indexes.length; i++){
-                            bloomFilter.setAt(indexes[i]);
-                        }
-                    }
+                for(int i=0; i<indexes.length; i++){
+                    bloomFilter.setAt(indexes[i]);
+                }
+            }
 
-                    context.write(null, bloomFilter);
+            context.write(null, bloomFilter);
         }
     }
 
