@@ -1,8 +1,9 @@
 import re
 import sys
 import util
+import os
 from BloomFilter import BloomFilter
-from pyspark import SparkContext, rdd
+from pyspark import SparkContext, rdd, SparkConf
 from util import *
 
 
@@ -32,7 +33,13 @@ if __name__ == "__main__":
         print("Invalid master type. Select one from {0}".format(MASTER_TYPES),  file=sys.stderr)
         sys.exit(-1)
         
-    sc = SparkContext(appName="BLOOM_FILTER", master=master)
+    if master == "yarn":
+        #Reuse python executable obtained from virtualenv
+        os.environ['PYSPARK_PYTHON'] = './environment/bin/python'
+        
+    # Include all python files in pyFiles argument (python packages need to be installed via virtualenv)
+    sc = SparkContext(appName="BLOOM_FILTER", master=master, pyFiles=["util.py", "BloomFilter.py"])
+
     host = sys.argv[16]
     port = sys.argv[17]
     base_hdfs = "hdfs://" + host + ":" + port + "/"

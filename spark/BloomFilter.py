@@ -20,7 +20,7 @@ class BloomFilter:
             self.m = m
             self.K = K
             self.P = p
-            self.bitArray = m*bitarray('0')
+            self.bitArray = bitarray('0'*m)
         
     def add(self, movieId: str):
         hashIndexes = self.computeHash(self.K, movieId, self.m)

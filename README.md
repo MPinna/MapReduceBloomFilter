@@ -1,8 +1,7 @@
 # MapRedBloomFilter
 
-
-## How to run Hadoop project
-
+## How to run **Hadoop** project
+---
 
 > **_NOTE:_** $HADOOP_HOME/sbin must be added in the path to run the following commands
 
@@ -40,6 +39,42 @@ On the **namenode** run:
 > hadoop jar <path_to_jar> <class> <input_file> <output_directory> [<options>]
 ```
 
+## How to run **Spark** project
+
+### **Locally**
+
+Command format
+```
+> spark-submit <py_file> [<options>]
+```
+
+### **On Yarn Cluster**
+
+The archive **pyspark_venv.tar.gz** contains a virtual environment with dependencies and python executable needed to run a python application in Spark.
+
+If your driver application uses other local python files, add them via *pyFiles* parameter of SparkContext (see spark_bloomfilter.py as an example)
+
+To run the driver program on YARN (note master should be set up as **yarn**)
+```
+> spark-submit --archives pyspark_venv.tar.gz#environment <py_file> [<options>]
+```
+
+If you need to add another *dependency* from the one listed in the file *requirements.txt*, follow these steps:
+
+1. Create another virtualenv and activate it
+
+```
+> python -m venv pyspark_venv
+> source pyspark_venv/bin/activate
+```
+2. Install all needed dependencies
+```
+> pip install <name>
+```
+3. Create a tar.gz archive (need venv-pack to be installed with pip)
+```
+> venv-pack -o pyspark_venv.tar.gz
+```
 
 ## Utility
 

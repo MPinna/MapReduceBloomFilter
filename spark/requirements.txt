@@ -1,0 +1,3 @@
+bitarray==2.5.1
+mmh3==3.0.0
+venv-pack==0.2.0
