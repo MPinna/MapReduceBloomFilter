@@ -87,9 +87,13 @@ public class MapRedFalsePositiveRateTest
             //Test movie presence on all BloomFilters
             int movieRating = (int) tokens[1];
             int currBloomFilterRating;
+            BloomFilter currBloomFilter;
             for(int i=0; i<UtilityConstants.NUM_OF_RATES; i++){
                 currBloomFilterRating = i+1;
-                boolean testResult = bloomFiltersByRating.get(currBloomFilterRating).test((String)tokens[0]);
+                currBloomFilter = bloomFiltersByRating.get(currBloomFilterRating);
+                if(currBloomFilter == null)
+                    continue;
+                boolean testResult = currBloomFilter.test((String)tokens[0]);
                 if(testResult && (int) movieRating != currBloomFilterRating)
                     false_positive_count[i]++;
                 if(currBloomFilterRating!=movieRating)

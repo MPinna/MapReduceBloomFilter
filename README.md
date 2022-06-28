@@ -40,6 +40,7 @@ On the **namenode** run:
 ```
 
 ## How to run **Spark** project
+---
 
 ### **Locally**
 
@@ -50,7 +51,7 @@ Command format
 
 ### **On Yarn Cluster**
 
-The archive **pyspark_venv.tar.gz** contains a virtual environment with dependencies and python executable needed to run a python application in Spark.
+The archive **pyspark_venv.tar.gz** contains a virtual environment with dependencies (mmh3 and bitarray) and python executable needed to run a python application in Spark.
 
 If your driver application uses other local python files, add them via *pyFiles* parameter of SparkContext (see spark_bloomfilter.py as an example)
 
@@ -61,17 +62,17 @@ To run the driver program on YARN (note master should be set up as **yarn**)
 
 If you need to add another *dependency* from the one listed in the file *requirements.txt*, follow these steps:
 
-1. Create another virtualenv and activate it
+** 1. Create another virtualenv and activate it **
 
 ```
 > python -m venv pyspark_venv
 > source pyspark_venv/bin/activate
 ```
-2. Install all needed dependencies
+** 2. Install all needed dependencies **
 ```
 > pip install <name>
 ```
-3. Create a tar.gz archive (need venv-pack to be installed with pip)
+** 3. Create a tar.gz archive (need venv-pack to be installed with pip) **
 ```
 > venv-pack -o pyspark_venv.tar.gz
 ```

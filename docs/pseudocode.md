@@ -127,3 +127,50 @@ class TESTREDUCER
             emit(r, falsePositiveRate)
 
 ```
+
+
+___
+## ComputeParams
+### Mapper:
+```python
+class COMPUTEPARAMSMAPPER
+
+    method MAP(splitid a, split s)
+
+        # for i in range(1, 11)
+        #     len <- getLen(i)
+        #     bloomFilter_i <- new BitArray[len]
+        #     bloomFilter_i.set(allZeros)
+
+
+        # for all movie m in split s do
+        #     rating <- round(m.rating)
+        #     id <- m.id
+        #     len <- getLen(rating)
+
+        #     for i in range(k):
+        #         bitIndex <- (hash_i(m.id) % len)
+        #         for i in range(1, 11)
+        #             bloomFilter_i[bitIndex] = 1
+
+        # for rating in range(1, 11)
+        #     emit(rating, bloomFilter_i)
+
+```
+### Reducer
+```python
+class COMPUTEPARAMSREDUCER
+
+
+    # method REDUCE(rating r, bloomFilters [b1, b2, ..., bj])
+
+    #     len <- getLen(r)
+    #     bloomFilter <- new BitArray[len]
+    #     bloomFilter.set(allZeros)
+
+    #     for bf in bloomFilters:
+    #         bloomFilter <- bitwiseOr(bloomFilter, bf)
+
+    #     emit(r, bloomFilter)
+
+```
