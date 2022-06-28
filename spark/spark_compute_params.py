@@ -14,10 +14,14 @@ def getRate(line:str):
     return line.split()[1]
 
 """
-Taken rate and number of relative items, compute m and k parameters and
+Taken a tuple containing rate and number of relative items, compute m and k parameters and
 return string to be saved as output of the computation
 """
-def computeParams(rate, n):
+def computeParams(rate_counter_tuple):
+    #Extract rate and n from tuple received as argument
+    rate = rate_counter_tuple[0]
+    n = rate_counter_tuple[1]
+    # Compute m and k parameters
     if len(sys.argv) == 8:
         # k is contrained and passed as argument
         k = k_param_br.value
