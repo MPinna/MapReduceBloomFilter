@@ -20,13 +20,13 @@ return string to be saved as output of the computation
 def computeParams(rate, n):
     if len(sys.argv) == 8:
         # k is contrained and passed as argument
-        k = int(sys.argv[7])
-        m = int(math.ceil(-(k*n)/math.log(1-math.pow(p, 1/k))))
+        k = k_param_br.value
+        m = int(math.ceil(-(k*n)/math.log(1-math.pow(p_br.value, 1/k))))
     else:
-        m = int(math.ceil((n * math.log(p)) / math.log(1 / math.pow(2, math.log(2)))))
+        m = int(math.ceil((n * math.log(p_br.value)) / math.log(1 / math.pow(2, math.log(2)))))
         k = util.roundHalfUp(math.log(2)*m/n)
     # Collect results in a string   
-    output = f"{rate}\t{p}\t{n}\t{m}\t{k}"
+    output = f"{rate}\t{p_br.value}\t{n}\t{m}\t{k}"
     return output
 
 
@@ -45,8 +45,18 @@ if __name__ == "__main__":
     # Initializing a SparkContext
     sc = SparkContext(master, "SparkComputeParams")
 
-    # Get requested false positive rate
-    p = float(sys.argv[6])
+    # Get values of p and possibly k and broadcast them
+    try:
+        # Get requested false positive rate
+        p_param = float(sys.argv[6])
+        p_br = sc.broadcast(p_param)
+        # Get maximum value for k if passed as argument
+        if len(sys.argv) == 8:
+            k_param = int(sys.argv[7])
+            k_param_br = sc.broadcast(k_param)
+    except ValueError:
+        print("[ERR] Invalid format of p and/or k parameters. Required float and int values")
+        sys.exit(-1)
 
     # Input file and output file path
     host = sys.argv[2]
