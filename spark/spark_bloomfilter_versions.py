@@ -65,7 +65,7 @@ if __name__ == "__main__":
     sc = SparkContext(appName="BLOOM_FILTER", master=master)
     host = sys.argv[2]
     port = sys.argv[3]
-    base_hdfs = "hdfs://" + host + ":" + port + "/user/hadoop"
+    base_hdfs = "hdfs://" + host + ":" + port + "/user/hadoop/"
     input_hdfs_path = base_hdfs + sys.argv[4]
     output_hdfs_path = base_hdfs + sys.argv[5]
     
@@ -92,7 +92,7 @@ if __name__ == "__main__":
     rdd_input = sc.textFile(input_hdfs_path, NUM_OF_PARTITIONS)
    
     # Remove header and malformed rows from input file
-    rows = input.filter(util.removeHeaderAndMalformedRows)
+    rows = rdd_input.filter(removeHeaderAndMalformedRows)
     
     if version == WITH_BLOOM_FILTERS:
         # Create and populate bloomFilters per rating
