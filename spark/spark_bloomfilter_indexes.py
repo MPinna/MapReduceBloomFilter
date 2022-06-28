@@ -1,8 +1,10 @@
-import imp
+from operator import index
 import sys
 import re
-from util import MASTER_TYPES, MASTER_TYPES_REGEX
+from util import *
 from pyspark import SparkContext
+from pyspark.resultiterable import ResultIterable
+from BloomFilter import BloomFilter
 
 ''''''''''''''''''''''''''''''''''''''''''''''''''' REDUNDANT '''''''''''''''''''''''''''''''''''''''''''''''''''
 if __name__ == "__main__":
@@ -18,11 +20,8 @@ if __name__ == "__main__":
         sys.exit(-1)
         
     sc = SparkContext(appName="BLOOM_FILTER_INDEXES", master=master)
-    host = sys.argv[16]
-    port = sys.argv[17]
-    base_hdfs = "hdfs://" + host + ":" + port + "/"
-    input_hdfs_path = base_hdfs + sys.argv[2]
-    output_hdfs_path = base_hdfs + sys.argv[3]
+    input_hdfs_path = sys.argv[2]
+    output_hdfs_path = sys.argv[3]
     
     try:
         m_list = [int(m) for m in sys.argv[4:14]]
@@ -37,31 +36,44 @@ if __name__ == "__main__":
             
     print(f"[LOG] master: {master}")
     print(f"[LOG] input_file_path: {input_hdfs_path}")
-    print(f"[LOG] output_file_path: {output_hdfs_path}")
+    #print(f"[LOG] output_file_path: {output_hdfs_path}")
     print(f"[LOG] m list: {m_list}")
     print(f"[LOG] k: {k}")
     print(f"[LOG] p: {p}")
-    
+           
     #Get ratings input from HDFS TODO: default partion number equals to the numbers of hdfs blocks in file, it is correct ? 
-    rdd_input = sc.textFile(input_hdfs_path)
+    rdd_input = sc.textFile(input_hdfs_path, 20)
 
     # Remove header from input file TODO: maybe we have to check all lines in map function ?
     header = rdd_input.first()
     rows = rdd_input.filter(lambda line: line != header)
    
     ''''''''''''''''''''''''''''''''''''''''''''''''''' REDUNDANT '''''''''''''''''''''''''''''''''''''''''''''''''''
+    def compute_indexes(line: str):
+        ''''''''''''''''''''''''''' REDUNDANT '''''''''''''''''''''''''''
+        # TODO: check if line is the right format
+        line_ = line.split()
+        rating = roundHalfUp(line_[1]) 
+        movieId = line_[2]
+        ''''''''''''''''''''''''''' REDUNDANT '''''''''''''''''''''''''''
+        indexes = BloomFilter.computeHash(k_br.value, movieId, m_list_br.value[rating-1])
+        return [(rating, indexes[i]) for i in range(0,k_br.value)] 
     
-    # TODO: compute indexes, (merge) and create bloom filters
-   
-   
-    ''''''''''''''''''''''''''''''''''''''''''''''''''' REDUNDANT '''''''''''''''''''''''''''''''''''''''''''''''''''
+    def fill_bloom_filter(tuple: tuple):
+        rating = tuple[0]
+        indexes = tuple[1]
+        bloom_filter = BloomFilter(rating, m_list_br.value[rating-1], k_br.value, p_br.value)
+        for index in indexes:
+            bloom_filter.setAt(index)
+        return bloom_filter
+
     
-    # Prepare output to be written into HDFS
-    rows_reduced_sorted = rows_reduced.sortByKey()
-    output_rdd = rows_reduced_sorted.map(lambda x: str(x[1])) #save BloomFilter in json format
+    bloom_filters = rows.flatMap(compute_indexes).distinct().groupByKey().map(fill_bloom_filter)  
+   
+    ''''''''''''''''''''''''''''''''''''''''''''''''''' REDUNDANT '''''''''''''''''''''''''''''''''''''''''''''''''''   
     
     # Save output on HDFS
-    output_rdd.saveAsTextFile(output_hdfs_path)
+    bloom_filters.saveAsTextFile(output_hdfs_path)
     
     ''''''''''''''''''''''''''''''''''''''''''''''''''' REDUNDANT '''''''''''''''''''''''''''''''''''''''''''''''''''
     
