@@ -18,9 +18,9 @@ Taken rate and number of relative items, compute m and k parameters and
 return string to be saved as output of the computation
 """
 def computeParams(rate, n):
-    if len(sys.argv) == 6:
+    if len(sys.argv) == 8:
         # k is contrained and passed as argument
-        k = int(sys.argv[5])
+        k = int(sys.argv[7])
         m = int(math.ceil(-(k*n)/math.log(1-math.pow(p, 1/k))))
     else:
         m = int(math.ceil((n * math.log(p)) / math.log(1 / math.pow(2, math.log(2)))))
@@ -32,8 +32,8 @@ def computeParams(rate, n):
 
 if __name__ == "__main__":
     # Check all the arguments are present
-    if len(sys.argv) != 5 and len(sys.argv) != 6:
-        print("Usage: SparkComputeParams <master> <input_file> <output_file> <p> [<max_k>]", file=sys.stderr)
+    if len(sys.argv) != 7 and len(sys.argv) != 8:
+        print("Usage: > spark-submit compute_params.py <master> <host> <port> <input_file> <output_file> <p> [<max_k>]", file=sys.stderr)
         sys.exit(-1)
     
     # Extract master flag and check its validity by means RegEx
@@ -46,11 +46,17 @@ if __name__ == "__main__":
     sc = SparkContext(master, "SparkComputeParams")
 
     # Get requested false positive rate
-    p = float(sys.argv[4])
+    p = float(sys.argv[6])
+
+    # Input file and output file path
+    host = sys.argv[2]
+    port = sys.argv[3]
+    base_hdfs = "hdfs://" + host + ":" + port + "/"
+    input_hdfs_path = base_hdfs + sys.argv[4]
+    output_hdfs_path = base_hdfs + sys.argv[5]
 
     # Get input file
-    #TODO in this way or by hdfs?
-    input = sc.textFile(sys.argv[2])
+    input = sc.textFile(input_hdfs_path)
 
     # Remove header from input file
     header = input.first()
@@ -67,4 +73,4 @@ if __name__ == "__main__":
     bloomFilterParams = counters.map(computeParams)
 
     # Write result in output file received as argument
-    bloomFilterParams.saveAsTextFile(sys.argv[3])
+    bloomFilterParams.saveAsTextFile(output_hdfs_path)
