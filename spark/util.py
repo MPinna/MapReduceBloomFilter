@@ -4,6 +4,8 @@ import re
 MASTER_TYPES = ("yarn", "local", "local[*]", "local[N]")
 MASTER_TYPES_REGEX = "^(yarn|local|local\[([\*]|[1-9][0-9]*)\])$"
 ROW_TYPES_REGEX = "^tt[0-9]+\t([1-9]\.[0-9]|10\.0)\t[1-9][0-9]*$"
+WITH_BLOOM_FILTERS = 'WithBloomFilters'
+WITH_INDEXES = 'WithIndexes'
 NUM_OF_PARTITIONS = 8
 
 
