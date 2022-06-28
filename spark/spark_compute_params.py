@@ -70,7 +70,7 @@ if __name__ == "__main__":
     output_hdfs_path = base_hdfs + sys.argv[5]
 
     # Get input file
-    input = sc.textFile(input_hdfs_path)
+    input = sc.textFile(input_hdfs_path, util.NUM_OF_PARTITIONS)
 
     # Remove header and malformed rows from input file
     rows = input.filter(util.removeHeaderAndMalformedRows)
