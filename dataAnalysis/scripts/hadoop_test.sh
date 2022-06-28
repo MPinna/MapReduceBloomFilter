@@ -5,7 +5,6 @@ mkdir -p logs
 # Number of repetitions
 N_BLOOM_TEST=10
 
-INPUT="title.ratings.tsv"
 JAR_FILE=~/it/unipi/hadoop/BloomFilter/1.0/BloomFilter-1.0.jar
 
 # Configurations
