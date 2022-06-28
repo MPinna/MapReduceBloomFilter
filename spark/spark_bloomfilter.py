@@ -7,16 +7,21 @@ from pyspark import SparkContext, rdd, SparkConf
 from util import *
 
 
-def mapBF(line: str):    
+def mapRatingMovie(line: str):
     line_ = line.split()
     rating = roundHalfUp(line_[1]) 
     movieId = line_[2]
-    
-    #TODO very costly I guess
-    bloomFilter = BloomFilter(rating, m_list_br.value[rating - 1], k_br.value, p_br.value)
-    bloomFilter.add(movieId)
-    return (rating, bloomFilter)
+    return (rating, movieId)
 
+def mapBF(item):    
+    rating = item[0]
+    movieIds = item[1]
+    bloomFilter = BloomFilter(rating, m_list_br.value[rating - 1], k_br.value, p_br.value)
+    
+    for movieId in movieIds: 
+        bloomFilter.add(movieId)
+
+    return (rating, bloomFilter)
 
 def reduce_bloomfilters(bloomfilter_a: BloomFilter, bloomfilter_b: BloomFilter):
     return bloomfilter_a.orBloomFilter(bloomfilter_b)
@@ -71,8 +76,11 @@ if __name__ == "__main__":
     header = rdd_input.first()
     rows = rdd_input.filter(lambda line: line != header)
     
+    # Parse input, group keys together
+    rows_grouped = rows.map(mapRatingMovie).groupByKey()
+    
     # Create and populate bloomFilters per rating
-    rows_mapped = rows.map(mapBF)
+    rows_mapped = rows_grouped.map(mapBF)
     
     # Merge bloomFilters with same rating
     rows_reduced = rows_mapped.reduceByKey(reduce_bloomfilters)
