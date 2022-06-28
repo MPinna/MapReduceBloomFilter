@@ -72,9 +72,8 @@ if __name__ == "__main__":
     # Get input file
     input = sc.textFile(input_hdfs_path)
 
-    # Remove header from input file
-    header = input.first()
-    rows = input.filter(lambda line: line != header)
+    # Remove header and malformed rows from input file
+    rows = input.filter(util.removeHeaderAndMalformedRows)
 
     # From each row create key-value pairs (rounded_rate, 1)
     rawRates = rows.map(getRate)
