@@ -23,7 +23,7 @@ def computeParams(rate, n):
         k = int(sys.argv[5])
         m = int(math.ceil(-(k*n)/math.log(1-math.pow(p, 1/k))))
     else:
-        m = int(math.ceil((n * math.log(p)) / math.log(1 / math.power(2, math.log(2)))))
+        m = int(math.ceil((n * math.log(p)) / math.log(1 / math.pow(2, math.log(2)))))
         k = util.roundHalfUp(math.log(2)*m/n)
     # Collect results in a string   
     output = f"{rate}\t{p}\t{n}\t{m}\t{k}"
