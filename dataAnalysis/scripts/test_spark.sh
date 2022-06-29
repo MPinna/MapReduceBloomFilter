@@ -5,13 +5,15 @@ mkdir -p logs
 # Number of repetitions
 N_BLOOM_TEST=10
 
-JAR_FILE=~/it/unipi/hadoop/BloomFilter/1.0/BloomFilter-1.0.jar
+MASTER="yarn"
+HDFS_HOST="hadoop-namenode"
+HDFS_PORT="9820"
 
 # Configurations
 P=(0.00001 0.0001 0.001 0.01 0.1)   ## 0.001%, 0.01%, 0.1%, 1%, 10%
-K=(0 3 5 7 9)                     ## K=0 means no constraints    
+K=(0 3 5 7 9)                       ## K=0 means no constraints    
 
-MAPPERS=(4 6 8 10 12)
+MAPPERS=(1 2 4 6 8 10 12)
 MAP_P=0.001
 MAP_K=0
 
@@ -24,11 +26,13 @@ function launch_test(){
   while [ $i -lt $N_BLOOM_TEST ]
   do
     echo -en "{\"name\": \"$3P$1K$2$4_$i\","
-    OUT_FILE="bloom$3P$1K$2$4_$i"
-    INPUT="input/P$1K$2$4"
+    OUT_FILE="spark_bloom$3P$1K$2$4"
+    INPUT="input/spark/P$1K$2$4"
 
     start=$(date +"%s%N")
-    hadoop jar $JAR_FILE it.unipi.hadoop.MapRedBloomFilter $(bash $INPUT $OUT_FILE $3)  &> .tmp
+
+    spark-submit --archives pyspark_venv.tar.gz#environment spark_bloomfilter_versions.py $MASTER $HDFS_HOST $HDFS_PORT $(bash $INPUT $OUT_FILE $3)  &> .tmp
+
     stop=$(date +"%s%N")
 
     echo -e "\"wallTime\":$(($stop-$start)),"
@@ -40,6 +44,7 @@ function launch_test(){
     echo -e "\"}"
   else
     echo -e "\"},"
+    hadoop fs -rm -r $OUT_FILE &> /dev/null
   fi
 
   i=$(( $i + 1 ))
@@ -59,7 +64,7 @@ function launch_all(){
     done
   done
   for m in ${MAPPERS[@]}; do
-    echo -e "\"P$P""K$K""MAP$m\":["
+    echo -e "\"P$MAP_P""K$MAP_K""MAP$m\":["
     launch_test $MAP_P $MAP_K WithBloomFilters MAP$m
     if (( $(echo "$m == ${MAPPERS[-1]}" | bc -l) ))
     then
@@ -80,7 +85,7 @@ function launch_all(){
     done
   done
   for m in ${MAPPERS[@]}; do
-  echo -e "\"P$P""K$K""MAP$m\":["
+  echo -e "\"P$MAP_P""K$MAP_K""MAP$m\":["
   launch_test $MAP_P $MAP_K WithIndexes MAP$m
   if (( $(echo "$m == ${MAPPERS[-1]}" | bc -l) ))
   then
