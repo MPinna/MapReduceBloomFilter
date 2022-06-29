@@ -38,12 +38,10 @@ class BloomFilter:
     @staticmethod
     def computeHash(k: int, movieId: str, m: int):
         hashIndexes = [0 for i in range(k)]
-        # print(f"HashIndexes (Before): {hashIndexes}")
         for i in range(k):
             hashIndexes[i] = mmh3.hash(movieId, i)
             hashIndexes[i] %= m
             hashIndexes[i] = abs(hashIndexes[i])
-        # print(f"HashIndexes (Then): {hashIndexes}")
 
         return hashIndexes
 
@@ -54,7 +52,7 @@ class BloomFilter:
         self.bitArray = bitArray
 
     def orBloomFilter(self, that: 'BloomFilter'):
-        self.bitArray = self.bitArray or that.bitArray
+        self.bitArray = self.bitArray | that.bitArray
         return self
 
     def clear(self):

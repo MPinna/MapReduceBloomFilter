@@ -165,7 +165,6 @@ public class MapRedBloomFilter
 
     public static class MapRedBloomFilterReducerWithIndexes extends Reducer<IntWritable,ArrayPrimitiveWritable,NullWritable,BloomFilter> {
 
-        //TODO add clean for classes
         // Number of hash functions to be computed
         private static int k;
         // Vector containg the dimensions in bit of each BloomFilter
