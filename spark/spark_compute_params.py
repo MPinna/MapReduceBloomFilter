@@ -47,7 +47,7 @@ if __name__ == "__main__":
         sys.exit(-1)
 
     # Initializing a SparkContext
-    sc = SparkContext(master, "SparkComputeParams")
+    sc = SparkContext(master, "SparkComputeParams", pyFiles=["util.py"])
 
     # Get values of p and possibly k and broadcast them
     try:
@@ -65,7 +65,7 @@ if __name__ == "__main__":
     # Input file and output file path
     host = sys.argv[2]
     port = sys.argv[3]
-    base_hdfs = "hdfs://" + host + ":" + port + "/"
+    base_hdfs = "hdfs://" + host + ":" + port + "/user/hadoop/"
     input_hdfs_path = base_hdfs + sys.argv[4]
     output_hdfs_path = base_hdfs + sys.argv[5]
 

@@ -136,41 +136,33 @@ ___
 class COMPUTEPARAMSMAPPER
 
     method MAP(splitid a, split s)
-
-        # for i in range(1, 11)
-        #     len <- getLen(i)
-        #     bloomFilter_i <- new BitArray[len]
-        #     bloomFilter_i.set(allZeros)
-
-
-        # for all movie m in split s do
-        #     rating <- round(m.rating)
-        #     id <- m.id
-        #     len <- getLen(rating)
-
-        #     for i in range(k):
-        #         bitIndex <- (hash_i(m.id) % len)
-        #         for i in range(1, 11)
-        #             bloomFilter_i[bitIndex] = 1
-
-        # for rating in range(1, 11)
-        #     emit(rating, bloomFilter_i)
-
+        rating_count = new int[NUM_RATES]
+        for movie m in split s:
+            rating_count[m.rating -1] += 1
+        
+         for i in range(1, 11):
+            emit(i, rating_count[i-1]) 
 ```
 ### Reducer
 ```python
 class COMPUTEPARAMSREDUCER
 
 
-    # method REDUCE(rating r, bloomFilters [b1, b2, ..., bj])
+    method REDUCE(rating r, rating_counts [c1, c2 ... ck])
+        p = getConfigurationParam("p")
+        k = getConfigurationParam("k")
 
-    #     len <- getLen(r)
-    #     bloomFilter <- new BitArray[len]
-    #     bloomFilter.set(allZeros)
+        rating_count_sum = 0
+        for rating_count in rating_counts:
+            rating_count_sum += rating_count
 
-    #     for bf in bloomFilters:
-    #         bloomFilter <- bitwiseOr(bloomFilter, bf)
-
-    #     emit(r, bloomFilter)
-
+        
+        if K = 0:
+            bestM = ceil((rating_count_sum * log(p)) / log(1 / 2**log(2)))
+            bestK = round(log(2)*bestM/rating_count_sum)
+        else:
+            bestK = k
+            bestM = ceil(-(k*rating_count_sum)/log(1-p**(1/k)))
+        
+        emit(r, (r, p, rating_count_sum, bestM, bestK))
 ```
