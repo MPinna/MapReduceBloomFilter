@@ -37,7 +37,12 @@ def compute_indexes(line: str):
     movieId = line_[2]
     indexes = BloomFilter.computeHash(k_br.value, movieId, m_list_br.value[rating-1])
     
-    return [(rating, indexes[i]) for i in range(0,k_br.value)] 
+    return (rating, indexes)
+
+def reduce_indexes(indexes_a, indexes_b):
+    for index in indexes_b:
+        indexes_a.append(index)
+    return indexes_a
 
 def fill_bloom_filter(keyValue: tuple):
     rating = keyValue[0]
@@ -124,8 +129,8 @@ if __name__ == "__main__":
         output_rdd = rows_reduced.map(lambda x: str(x[1]))
     else:
         # Compute indexes, remove duplicates and group by rating
-        indexes = rows.flatMap(compute_indexes).distinct().groupByKey().sortByKey()
-        
+        indexes = rows.map(compute_indexes).reduceByKey(reduce_indexes)
+                
         # Cretae and set bloom filters bit 
         output_rdd = indexes.map(fill_bloom_filter)
     
