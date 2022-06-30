@@ -21,7 +21,6 @@ public class BloomFilter implements Writable {
     private float P;
     private BitSet bitArray;
 
-    // TODO: check if this should actually be static
     private final static MurmurHash murmurHash = (MurmurHash) MurmurHash.getInstance();
 
 
@@ -32,27 +31,18 @@ public class BloomFilter implements Writable {
      * Create a BloomFilter object from a JSON string
      * @param BloomFilterJsonString
      */
-    public BloomFilter(String jsonString){
+    public BloomFilter(String jsonString) throws JSONException,DecoderException{
         JSONObject jsonObject = new JSONObject(jsonString);
+             
+        this.rating = jsonObject.getInt("rating");
+        this.m = jsonObject.getInt("m");
+        this.K = jsonObject.getInt("K");
+        this.P = jsonObject.getFloat("P");
         
-        try {
-            
-            this.rating = jsonObject.getInt("rating");
-            this.m = jsonObject.getInt("m");
-            this.K = jsonObject.getInt("K");
-            this.P = jsonObject.getFloat("P");
-        } catch (JSONException e) {
-            //TODO: handle exception
-        }
-
         String bitArrayString = new String(jsonObject.getString("bitArray"));
-        try {
-            byte[] bytes = Hex.decodeHex(bitArrayString.toCharArray());
-            this.bitArray = BitSet.valueOf(bytes);
-            
-        } catch (DecoderException e) {
-            //TODO: handle exception
-        }
+        
+        byte[] bytes = Hex.decodeHex(bitArrayString.toCharArray());
+        this.bitArray = BitSet.valueOf(bytes);
     }
 
     /**
@@ -81,8 +71,13 @@ public class BloomFilter implements Writable {
      */
     public void add(String movieId){
         int[] hashIndexes = computeHash(this.K, movieId, this.m);
+        // Check indexes validity
         for (int i = 0; i < this.K; i++) {
-            // TODO: handle exception
+            if (hashIndexes[i] < 0 || hashIndexes[i] >= m)
+                return ;
+        }
+        // Set bits at the computed indexes
+        for (int i = 0; i < this.K; i++) {
             this.bitArray.set(hashIndexes[i]);
         }
     }
@@ -96,7 +91,9 @@ public class BloomFilter implements Writable {
     public boolean test(String movieId){
         int[] hashIndexes = computeHash(this.K, movieId, this.m);
         for (int i = 0; i < this.K; i++) {
-            // TODO: handle exception
+            int index = hashIndexes[i];
+            if (index < 0 || index >= m)
+                return false;
             if(!this.bitArray.get(hashIndexes[i])){
                 return false;
             }
@@ -126,10 +123,10 @@ public class BloomFilter implements Writable {
      * specified index
      * @param index index of the bit vector to be set to 1
      */
-    //TODO: check index bounds
     public void setAt(int index){
-        //TODO: check exception handling
-        this.bitArray.set(index);
+        //Check index bounds
+        if(index >=0 && index < this.m)
+            this.bitArray.set(index);
     }
 
     /**
@@ -156,8 +153,7 @@ public class BloomFilter implements Writable {
         out.writeInt(this.K);
 
         byte[] serializedBitSet = this.bitArray.toByteArray();
-
-        // TODO: check if this causes poor memory perfomance  
+  
         out.writeInt(serializedBitSet.length);
         out.write(serializedBitSet);
     }
