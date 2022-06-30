@@ -1,5 +1,6 @@
 from BloomFilter import BloomFilter
 import mmh3
+from bitarray import bitarray
 
 def printBloomFilter(bloom: BloomFilter):
     print(f"Rating: {bloom.rating}")
@@ -22,3 +23,6 @@ assert bloom.test("tt000001") == True
 assert bloom.test("tt000005") == True
 
 print("Test Finished Correctly.")
+
+ 
+

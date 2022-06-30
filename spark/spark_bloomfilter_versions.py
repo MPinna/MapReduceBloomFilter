@@ -74,7 +74,7 @@ if __name__ == "__main__":
         os.environ['PYSPARK_PYTHON'] = './environment/bin/python'
         
     # Include all python files in pyFiles argument (python packages need to be installed via virtualenv)
-    sc = SparkContext(appName="BLOOM_FILTER", master=master, pyFiles=["util.py", "BloomFilter.py"])
+    sc = SparkContext(appName="BLOOM_FILTER_" + version, master=master, pyFiles=["util.py", "BloomFilter.py"])
     host = sys.argv[2]
     port = sys.argv[3]
     base_hdfs = "hdfs://" + host + ":" + port + "/user/hadoop/"
@@ -120,11 +120,8 @@ if __name__ == "__main__":
         # Merge bloomFilters with same rating
         rows_reduced = rows_mapped.reduceByKey(reduce_bloomfilters)
 
-        # Prepare output to be written into HDFS
-        rows_reduced_sorted = rows_reduced.sortByKey()
-        
         # Save BloomFilter in json format
-        output_rdd = rows_reduced_sorted.map(lambda x: str(x[1]))
+        output_rdd = rows_reduced.map(lambda x: str(x[1]))
     else:
         # Compute indexes, remove duplicates and group by rating
         indexes = rows.flatMap(compute_indexes).distinct().groupByKey().sortByKey()

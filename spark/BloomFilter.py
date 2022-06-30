@@ -14,7 +14,9 @@ class BloomFilter:
             self.m = obj["m"]
             self.K = obj["K"]
             self.P = obj["P"]
-            self.bitArray = bitarray(obj["bitarray"])
+            bytes_bitarray = bytes.fromhex(obj["bitarray"])
+            self.bitArray = bitarray()
+            self.bitArray.frombytes(bytes_bitarray)
         else:
             self.rating = rating
             self.m = m
@@ -64,6 +66,6 @@ class BloomFilter:
         obj["m"] = self.m
         obj["K"] = self.K
         obj["P"] = self.P
-        obj["bitarray"] = self.bitArray.to01()
+        obj["bitarray"] = self.bitArray.tobytes().hex()
         return json.dumps(obj)
     
