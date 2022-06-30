@@ -180,7 +180,7 @@ public class MapRedFalsePositiveRateTest
 
         String[] otherArgs = new GenericOptionsParser(conf, args).getRemainingArgs();
         if (otherArgs.length != 4 && otherArgs.length != 5 && otherArgs.length != 6) {
-           System.err.println("Usage: BloomFilter <input> <output> <num_lines_per_split> <path_bloom_filters_file> [<defaultFS> = \"localhost\"] [<defaultFSPort> = 9000]");//TODO 10 times or 10 ?
+           System.err.println("Usage: BloomFilter <input> <output> <num_lines_per_split> <path_bloom_filters_file> [<defaultFS> = \"localhost\"] [<defaultFSPort> = 9000]");
            System.exit(1);
         }
         //Print input and output file path
@@ -215,7 +215,7 @@ public class MapRedFalsePositiveRateTest
         }
         catch(NumberFormatException e){
             e.printStackTrace();
-            System.err.println("Usage: BloomFilter <input> <output> <num_lines_per_split> <items_count_per_rate>{10 times} <path_bloom_filters_file> [<defaultFS> = \"localhost\"] [<defaultFSPort> = 9000]");//TODO 10 times or 10 ?
+            System.err.println("Usage: BloomFilter <input> <output> <num_lines_per_split> <items_count_per_rate>{10 times} <path_bloom_filters_file> [<defaultFS> = \"localhost\"] [<defaultFSPort> = 9000]");
             System.exit(1);
         }
         

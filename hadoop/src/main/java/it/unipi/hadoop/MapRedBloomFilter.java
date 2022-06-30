@@ -212,7 +212,7 @@ public class MapRedBloomFilter
 
         String[] otherArgs = new GenericOptionsParser(conf, args).getRemainingArgs();
         if (otherArgs.length != 15) {
-           System.err.println("Usage: BloomFilter <input> <output> <num_lines_per_split> <m_value>{10 times} <k_value> <version>");//TODO 10 times or 10 ?
+           System.err.println("Usage: BloomFilter <input> <output> <num_lines_per_split> <m_value>{10} <k_value> <version>");
            System.exit(1);
         }
         //Print input and output file path

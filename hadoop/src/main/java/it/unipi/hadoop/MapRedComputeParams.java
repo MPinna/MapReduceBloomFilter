@@ -36,7 +36,7 @@ public class MapRedComputeParams
                 return;  
             }
             
-            ratings_count[(int)tokens[1]-1]++; //TODO: is it nice ?   
+            ratings_count[(int)tokens[1]-1]++;   
                     
         }
 
