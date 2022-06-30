@@ -129,10 +129,13 @@ if __name__ == "__main__":
         output_rdd = rows_reduced.map(lambda x: str(x[1]))
     else:
         # Compute indexes, remove duplicates and group by rating
-        indexes = rows.map(compute_indexes).reduceByKey(reduce_indexes)
+        indexes = rows.map(compute_indexes)
+        
+        # Reduce indexes by key
+        aggregate_indexes = indexes.reduceByKey(reduce_indexes)
                 
-        # Cretae and set bloom filters bit 
-        output_rdd = indexes.map(fill_bloom_filter)
+        # Create and set bloom filters bit 
+        output_rdd = aggregate_indexes.map(fill_bloom_filter)
     
     # Save output on HDFS
     output_rdd.saveAsTextFile(output_hdfs_path)
