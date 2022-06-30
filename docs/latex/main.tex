@@ -100,7 +100,7 @@ citestyle=authoryear
 
 \newenvironment{specifications}
 {
-	\fontfamily{qtm}\selectfont
+	\small
 }{\par}
 
 
@@ -113,13 +113,15 @@ citestyle=authoryear
     {\scshape University of Pisa}\\
     School of Engineering\\
     \rule{7cm}{0.01cm}\\
-    {\normalsize{\scshape Cloud}}\\
+    {\normalsize{\scshape Cloud Computing}}\\
     [2cm]
-    {\scshape <title of the project>}\\
+    {\scshape A MapReduce implementation of Bloom filters}\\
     [3cm]
-    \LARGE{\textbf{Supervisors}\hfill\textbf{Student(s)}}\\
-    \Large{\emph{Professor 1}\hfill\emph{Marco Pinna\\}}
-    \Large{\emph{Professor 2}\hfill}
+    \LARGE{\textbf{Supervisors}\hfill\textbf{Students}}\\
+    \Large{\emph{Nicola Tonellotto}\hfill\emph{Marco Pinna\\}}
+    \Large{\emph{Carlo Vallati}\hfill\emph{Olgerti Xhanej\\}}
+    \Large{\hphantom{} \hfill\emph{Federico Cristofani\\}}
+    \Large{\hphantom{} \hfill\emph{Matteo Biondi\\}}
     \vfill
     \date{\today}
 }
@@ -144,8 +146,10 @@ citestyle=authoryear
 \pagenumbering{arabic}
 
 \include{introduction}
-\include{overview}
-\include{appendices}
+\include{design}
+\include{hadoop}
+\include{spark}
+\include{performance}
 \printbibliography
 
 \end{document}

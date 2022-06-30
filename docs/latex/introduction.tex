@@ -4,4 +4,36 @@
 % Author: Marco Pinna
 %         Created on <date>
 %-------------------------------------------------------------------------------
-\chapter{Introduction}
+\chapter{Introduction}\label{introduction}
+This work concerns the design, implementation and testing of Bloom filters using the MapReduce framework, both in Java and in Python.\\
+The specifications are detailed in the following:
+
+\begin{displayquote}
+    \begin{specifications}
+	You will build a bloom filter over the ratings of movies listed in the \color{red}IMDb datasets\color{black}. The average ratings are rounded to the closest integer value, and you will compute a bloom filter for each rating value.\\
+	In your Hadoop implementation, you must use the following classes:
+	\begin{itemize}
+		\item \texttt{org.apache.hadoop.mapreduce.lib.input.NLineInputFormat}: splits N lines of input as one split;
+		\item \texttt{org.apache.hadoop.util.hash.Hash.MURMUR\_HASH}: the hash function family to use.
+	\end{itemize}
+	In your Spark implementation, you must use/implement analogous classes.\\
+	In this project you must:
+	\begin{enumerate}
+	\item design a MapReduce algorithm (using pseudocode) to implement the bloom filter construction;
+	\item implement the MapReduce bloom filter construction algorithm using the Hadoop framework;
+	\item implement the MapReduce bloom filter construction algorithm using the Spark framework;
+	\item test both implementations on the IMDb ratings dataset, computing the exact number of false positives for each
+rating;
+	\item write a project report detailing your design, implementations and reporting the experimental results.
+	\end{enumerate}
+    \end{specifications}
+\end{displayquote}
+The work is organized as follows:
+\begin{itemize}
+	\item In chapter 2 a brief overview of Bloom filters is given. Then the general algorithm is presented, with two possible implementations, together with design choices and hypotheses or considerations that have been made about the dataset to be used or the use-cases of the Bloom filters.
+	\item Chapter 3 concerns the Java implementation of the algorithm, that makes use of Hadoop framework.
+	\item Chapter 4 concerns the Python implementation of the algorithm, that makes use of Spark framework
+	\item In chapter 5 an evaluation of the performance of both implementation is provided.
+\end{itemize}
+
+The entire codebase is available at \url{https://github.com/MPinna/MapReduceBloomFilter} .

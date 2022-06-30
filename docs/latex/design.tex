@@ -1,0 +1,24 @@
+%-------------------------------------------------------------------------------
+% File: design.tex
+%       
+%
+% Author: Marco Pinna
+%         Created on 14/06/2022
+%-------------------------------------------------------------------------------
+\chapter{Overview and design choices}\label{ch:design}
+In this chapter we firstly present a brief overview of what Bloom filters are (partly taken from the project specifications); then we show the general algorithm, with two possible implementation along with their respective pseudo-code, together with design choices and hypotheses that have been made during the design process.\\
+Finally, some considerations about the dataset to be used and the use cases of the Bloom filter are made.\\
+
+\section{Bloom filters}
+A \textit{Bloom filter} is a space-efficient probabilistic data structure that is used for membership testing.\\
+A Bloom filter consists of a bit-vector with \textit{m} elements and \textit{k} hash functions to map \textit{n} keys to the \textit{m} elements of the bit-vector.\\
+The two possible operations that can be done on a Bloom filter are \texttt{add} and \texttt{test}.\\
+Given a key \textit{$id_{i}$}, every hash function \textit{$h_{1}, ..., h_{k}$} computes the corresponding output positions and sets the corresponding bit in that position to 1.\\
+The space efficiency of Bloom filters comes at the cost of having a non-zero probability of false positives. The false positive rate of a Bloom filter is denoted by \textit{p}.\\\
+Therefore the two possible outcomes of the \texttt{test} function of the Bloom filter are ``Possibly in set" or ``Definitely not in set".\\
+
+\section{Algorithm design}
+The general idea of this MapReduce implementation is
+
+
+%TODO inserire figure
