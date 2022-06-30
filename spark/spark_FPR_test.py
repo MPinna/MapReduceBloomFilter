@@ -68,9 +68,9 @@ if __name__== "__main__":
         exit(1)
 
     master = sys.argv[1]
-    if(master not in MASTER_TYPES):
-        print("Invalid master type. Select one from {0}".format(MASTER_TYPES),  file=sys.stderr)
-        exit(-1)
+    if not re.search(util.MASTER_TYPES_REGEX,master):
+        print(f"Invalid master type. Select one from {util.MASTER_TYPES}",  file=sys.stderr)
+        sys.exit(-1)
 
     sc = SparkContext(appName="FPR_RATE", master= master, pyFiles=["util.py", "BloomFilter.py"])
 
