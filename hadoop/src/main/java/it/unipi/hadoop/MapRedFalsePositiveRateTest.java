@@ -141,7 +141,6 @@ public class MapRedFalsePositiveRateTest
                         // Check values validity
                         if(counter[0]<0 || counter[1]<0){
                             logger.info(String.format("Invalid received counters: %s, %s", String.valueOf(counter[0]), String.valueOf(counter[1])));
-                            //TODO: continue or return?
                             continue;
                         }
                         // Aggregate all the counters received from each mapper for a given key
@@ -162,11 +161,9 @@ public class MapRedFalsePositiveRateTest
                     }
 
                     // Compute false positive rate
-                    //TODO check rateItemsCount?
                     float falsePositiveRate = (float)falsePositiveCounter/(float)(trueNegativeCounter + falsePositiveCounter);
                     outputValue.set(falsePositiveRate);
 
-                    //TODO is it ok to reuse the received key?  
                     // Emit rating and values of the false positive rate for this BloomFilter
                     context.write(key, outputValue);
         }
