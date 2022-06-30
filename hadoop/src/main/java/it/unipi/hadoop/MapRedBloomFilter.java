@@ -41,7 +41,12 @@ public class MapRedBloomFilter
             // Init bloom filters
             bloomFilters = new BloomFilter[UtilityConstants.NUM_OF_RATES];
             for (int i = 0; i < UtilityConstants.NUM_OF_RATES; ++i){
-                bloomFilters[i] = new BloomFilter(i+1, m[i], k, -1);
+                try{
+                    bloomFilters[i] = new BloomFilter(i+1, m[i], k, -1);
+                }
+                catch(Exception e){
+                    System.exit(1);
+                }
                 logger.info(String.format("BloomFilter[%d]: <M = %d K = %d>", i+1, m[i], k));
             }
         }
@@ -95,15 +100,20 @@ public class MapRedBloomFilter
                 throws IOException, InterruptedException 
         {
             int rating = key.get();
-            BloomFilter bloomFilter = new BloomFilter(rating, m[rating-1], k, -1);
-            
-            logger.info(String.format("BloomFilter[%d]: <M = %d K = %d>", rating, m[rating-1], k));
+            try{
+                BloomFilter bloomFilter = new BloomFilter(rating, m[rating-1], k, -1);
+                logger.info(String.format("BloomFilter[%d]: <M = %d K = %d>", rating, m[rating-1], k));
 
-            for (BloomFilter value : values) {
-                bloomFilter.or(value);
+                for (BloomFilter value : values) {
+                    bloomFilter.or(value);
+                }
+
+                context.write(null, bloomFilter);
             }
-
-            context.write(null, bloomFilter);
+            catch(Exception e){
+                e.printStackTrace();
+                return;
+            }
         }
     }
 
@@ -188,8 +198,14 @@ public class MapRedBloomFilter
         {
             //Create BloomFilter for the given rating
             int rating = key.get();
-            bloomFilter = new BloomFilter(rating, m[rating - 1], k, p);
-            
+            try{
+                bloomFilter = new BloomFilter(rating, m[rating - 1], k, p);
+            }
+            catch(Exception e){
+                e.printStackTrace();
+                return;
+            }
+
             //Add indexes
             for(ArrayPrimitiveWritable value: values){
                 int[] indexes = (int[]) value.get();

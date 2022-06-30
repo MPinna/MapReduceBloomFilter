@@ -67,8 +67,13 @@ public class MapRedFalsePositiveRateTest
             String line = null;
             BloomFilter tempBloomFilter;
             while ((line=bufferedReader.readLine())!=null){
-                tempBloomFilter = new BloomFilter(line);
-                bloomFiltersByRating.put(tempBloomFilter.getRating(), tempBloomFilter);
+                try{
+                    tempBloomFilter = new BloomFilter(line);
+                    bloomFiltersByRating.put(tempBloomFilter.getRating(), tempBloomFilter);
+                }
+                catch(Exception e){
+                    System.exit(1);
+                }
             }
             inputStream.close();
             fileSystem.close();
@@ -131,41 +136,42 @@ public class MapRedFalsePositiveRateTest
         }
 
         public void reduce(final IntWritable key, final Iterable<ArrayPrimitiveWritable> values, final Context context)
-                throws IOException, InterruptedException {
-                    int rate = key.get();
-                    int trueNegativeCounter = 0;
-                    int falsePositiveCounter = 0;
+                throws IOException, InterruptedException 
+        {
+            int rate = key.get();
+            int trueNegativeCounter = 0;
+            int falsePositiveCounter = 0;
 
-                    for (final ArrayPrimitiveWritable val : values) {
-                        int[] counter = (int[]) val.get();
-                        // Check values validity
-                        if(counter[0]<0 || counter[1]<0){
-                            logger.info(String.format("Invalid received counters: %s, %s", String.valueOf(counter[0]), String.valueOf(counter[1])));
-                            continue;
-                        }
-                        // Aggregate all the counters received from each mapper for a given key
-                        falsePositiveCounter += counter[0];
-                        trueNegativeCounter += counter[1];
-                    }
+            for (final ArrayPrimitiveWritable val : values) {
+                int[] counter = (int[]) val.get();
+                // Check values validity
+                if(counter[0]<0 || counter[1]<0){
+                    logger.info(String.format("Invalid received counters: %s, %s", String.valueOf(counter[0]), String.valueOf(counter[1])));
+                    continue;
+                }
+                // Aggregate all the counters received from each mapper for a given key
+                falsePositiveCounter += counter[0];
+                trueNegativeCounter += counter[1];
+            }
 
-                    //Check key validity
-                    if(rate < UtilityConstants.MIN_RATE || rate > UtilityConstants.MAX_RATE){
-                        logger.info(String.format("Invalid received rate: %s", key.toString()));
-                        return;
-                    }
+            //Check key validity
+            if(rate < UtilityConstants.MIN_RATE || rate > UtilityConstants.MAX_RATE){
+                logger.info(String.format("Invalid received rate: %s", key.toString()));
+                return;
+            }
 
-                    // Check not to divide by zero
-                    if((trueNegativeCounter + falsePositiveCounter) == 0){
-                        logger.info(String.format("Invalid number of true negative for key %s: %s", key.toString(), String.valueOf(trueNegativeCounter)));
-                        return;
-                    }
+            // Check not to divide by zero
+            if((trueNegativeCounter + falsePositiveCounter) == 0){
+                logger.info(String.format("Invalid number of true negative for key %s: %s", key.toString(), String.valueOf(trueNegativeCounter)));
+                return;
+            }
 
-                    // Compute false positive rate
-                    float falsePositiveRate = (float)falsePositiveCounter/(float)(trueNegativeCounter + falsePositiveCounter);
-                    outputValue.set(falsePositiveRate);
+            // Compute false positive rate
+            float falsePositiveRate = (float)falsePositiveCounter/(float)(trueNegativeCounter + falsePositiveCounter);
+            outputValue.set(falsePositiveRate);
 
-                    // Emit rating and values of the false positive rate for this BloomFilter
-                    context.write(key, outputValue);
+            // Emit rating and values of the false positive rate for this BloomFilter
+            context.write(key, outputValue);
         }
     }
 
