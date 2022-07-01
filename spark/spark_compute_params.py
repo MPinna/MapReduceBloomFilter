@@ -37,7 +37,7 @@ def computeParams(rate_counter_tuple):
 if __name__ == "__main__":
     # Check all the arguments are present
     if len(sys.argv) != 7 and len(sys.argv) != 8:
-        print("Usage: > spark-submit compute_params.py <master> <host> <port> <input_file> <output_file> <p> [<max_k>]", file=sys.stderr)
+        print("Usage: > spark-submit spark_compute_params.py <master> <host> <port> <input_file> <output_file> <p> [<max_k>]", file=sys.stderr)
         sys.exit(-1)
     
     # Extract master flag and check its validity by means RegEx
