@@ -24,7 +24,7 @@ def mapRatingMovie(line: str):
     return (rating, movieId)
 
 def FPR_map(item: tuple):
-    bloom_filters_by_rating = {}
+    bloom_filters_by_rating = None
     false_positive_count = [0]*NUM_OF_RATINGS
     true_negative_count = [0]*NUM_OF_RATINGS
 
@@ -34,25 +34,38 @@ def FPR_map(item: tuple):
         bloom_filters_by_rating[temp_bloom_filter.rating] = temp_bloom_filter
 
     movie_rating = item[0]
-    movie_id = item[1]
+    movie_ids = item[1]
 
     for i in range(NUM_OF_RATINGS):
         curr_bloom_filter_rating = i+1
         curr_bloom_filter: BloomFilter = bloom_filters_by_rating.get(curr_bloom_filter_rating)
         if(curr_bloom_filter == None):
             continue
-        movie_in_filter = curr_bloom_filter.test(movie_id)
-        if(movie_in_filter and movie_rating != curr_bloom_filter_rating):
-            false_positive_count[i] += 1
-        if(curr_bloom_filter_rating != movie_rating):
-            true_negative_count[i] += 1
-    return (false_positive_count, true_negative_count)
-    
+        for movie_id in movie_ids:
+            movie_in_filter = curr_bloom_filter.test(movie_id)
+            if(movie_in_filter and movie_rating != curr_bloom_filter_rating):
+                false_positive_count[i] += 1
+            if(curr_bloom_filter_rating != movie_rating):
+                true_negative_count[i] += 1
+
+
+    return [(i + 1, (false_positive_count[i], true_negative_count[i])) for i in range(NUM_OF_RATINGS)]
+
     
 def FPR_reduce(counts_a: tuple, counts_b: tuple):
-    cumul_false_positives = list(map(add, counts_a[0], counts_b[0]))
-    cumul_true_negatives = list(map(add, counts_a[1], counts_b[1]))
+    cumul_false_positives = counts_a[0] + counts_b[0]
+    cumul_true_negatives = counts_a[1] + counts_b[1]
     return (cumul_false_positives, cumul_true_negatives)
+
+def get_rate_from_counts(x: tuple):
+    rating = x[0]
+
+    FP = x[1][0]    
+    TN = x[1][1]
+
+    FPR = FP/(FP + TN)
+    return (rating, FPR)
+
 
 
 if __name__== "__main__":
@@ -106,17 +119,11 @@ if __name__== "__main__":
     rows: RDD = rdd_input.filter(removeHeaderAndMalformedRows)
 
     rows_grouped: RDD = rows.map(mapRatingMovie).groupByKey()
-
-    rows_mapped: RDD = rows_grouped.map(FPR_map)
+    
+    rows_mapped: RDD = rows_grouped.flatMap(FPR_map)
 
     rows_reduced: RDD = rows_mapped.reduceByKey(FPR_reduce)
 
-    rows_reduced_sorted: RDD = rows_reduced.sortByKey()
-
-    output_rdd: RDD = rows_reduced_sorted.map(lambda x: str(x[0]/(x[0] + x[1])))
+    output_rdd: RDD = rows_reduced.map(get_rate_from_counts)
 
     output_rdd.saveAsTextFile(output_file_path)
-    
-
-
-    
