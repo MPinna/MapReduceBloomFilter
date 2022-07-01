@@ -9,12 +9,13 @@ class BLOOMFILTERMAPPER
         for all movie m in split s:
             rating <- round(m.rating)
             id <- m.id
-            len <- getLen(rating)
-
+            len <- getBitArrayLen(rating)
+            bitArrayIndexes <- new Array[k]
+             
             for i in range(k):
-                bitIndex[i] <- (hash_i(m.id) % len)
+                bitArrayIndexes[i] <- (hash_i(m.id) % len)
 
-            emit(rating, bitIndex)
+            emit(rating, bitArrayIndexes)
 
 ```
 ### Reducer
@@ -42,23 +43,18 @@ class BLOOMFILTERMAPPER
     method MAP(splitid a, split s)
 
         for i in range(1, 11)
-            len <- getLen(i)
+            len <- getBitArrayLen(i)
             bloomFilter_i <- new BitArray[len]
             bloomFilter_i.set(allZeros)
 
 
         for all movie m in split s do
             rating <- round(m.rating)
-            id <- m.id
-            len <- getLen(rating)
+            len <- getBitArrayLen(rating)
+            bloomFilter_i.add(m.id)
 
-            for i in range(k):
-                bitIndex <- (hash_i(m.id) % len)
-                for i in range(1, 11)
-                    bloomFilter_i[bitIndex] = 1
-
-        for rating in range(1, 11)
-            emit(rating, bloomFilter_i)
+        for i in range(1, max_rating)
+            emit(i, bloomFilter_i)
 
 ```
 ### Reducer
@@ -88,25 +84,24 @@ class TESTMAPPER
     method MAP(splitid a, split s)
         savedBloomFilters <- loadBloomFilterFromHDFS()
 
-        true_negative_count = new int[NUM_OF_RATE]
-        false_positive_count = new int[NUM_OF_RATE]
+        true_negative_count <- new int[NUM_OF_RATE]
+        false_positive_count <- new int[NUM_OF_RATE]
 
         for all movie m in split s:
-            rating <- round(m.rating)
-            id <- m.id
-            for bloomFilter in savedBloomFilters:
-                present <- bloomFilter.test(id)
-                bloomFilterRating <- bloomFilter.getRating()
-                if (present and rating != bloomFilterRating):
+            movieRating <- round(m.rating)
+            for currRating in range(1, max_rating)
+                bloomFilter <- savedBloomFilters[currRating]
+                test_result <- bloomFilter.test(m.id)
+                if (test_result and rating != bloomFilterRating):
                     false_positive_count[bloomFilterRating -1] += 1
-                if (rating != bloomFilterRating):
+                if (not test_result and rating != bloomFilterRating):
                     true_negative_count[bloomFilterRating -1] += 1
 
-        counters = new int[2]
+        counter = new int[2]
         for bloomFilter in savedBloomFilters:
             bloomFilterRating <- bloomFilter.getRating()
-            counter[0] = false_positive_count[bloomFilterRating -1]
-            counter[1] = true_negative_count[bloomFilterRating -1]
+            counter[0] <- false_positive_count[bloomFilterRating -1]
+            counter[1] <- true_negative_count[bloomFilterRating -1]
             emit(bloomFilterRating, counter)
 
 ```
@@ -136,11 +131,12 @@ ___
 class COMPUTEPARAMSMAPPER
 
     method MAP(splitid a, split s)
-        rating_count = new int[NUM_RATES]
+        rating_count <- new int[NUM_RATING]
+        
         for movie m in split s:
             rating_count[m.rating -1] += 1
         
-         for i in range(1, 11):
+        for i in range(1, max_rating):
             emit(i, rating_count[i-1]) 
 ```
 ### Reducer
