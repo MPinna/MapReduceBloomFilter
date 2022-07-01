@@ -22,14 +22,15 @@ class BLOOMFILTERMAPPER
 ```python
 class BLOOMFILTERREDUCER
 
-    method REDUCE(rating r, bitIndexes [b1, b2, ..., bj])
+    method REDUCE(rating r, bitIndexes [b1[], b2[], ..., bj[]] as bs)
 
-        len <- getLen(r)
+        len <- getBloomFilterLen(r)
         bloomFilter <- new BitArray[len]
         bloomFilter.set(allZeros)
 
-        for bitIndex b in bitIndexes:
-                bloomFilter[b] = 1
+        for bitIndex b in bs:
+            for index i in b:
+                bloomFilter[i] = 1
 
         emit(r, bloomFilter)
 
@@ -62,16 +63,16 @@ class BLOOMFILTERMAPPER
 class BLOOMFILTERREDUCER
 
 
-    method REDUCE(rating r, bloomFilters [b1, b2, ..., bj])
+    method REDUCE(rating r, bloomFilters [b1, b2, ..., bj] as bfs)
 
-        len <- getLen(r)
-        bloomFilter <- new BitArray[len]
-        bloomFilter.set(allZeros)
+        len <- getBloomFilterLen(r)
+        bloomFilter_result <- new BitArray[len]
+        bloomFilter_result.set(allZeros)
 
-        for bf in bloomFilters:
-            bloomFilter <- bitwiseOr(bloomFilter, bf)
+        for bloomFilter bf in bfs :
+            bloomFilter_result <- bitwiseOr(bloomFilter_result, bf)
 
-        emit(r, bloomFilter)
+        emit(r, bloomFilter_result)
 
 ```
 ___
@@ -109,13 +110,13 @@ class TESTMAPPER
 ```python
 class TESTREDUCER
 
-    method REDUCE(rating r, counters [c1, c2, ..., cj])
-        trueNegativeCounter = 0
+    method REDUCE(rating r, counters [c1[], c2[], ..., cj[]] as cs)
         falsePositiveCounter = 0
-        for counter in counters:
-            if(counter[0] > 0 and counter[1] > 0)
-                falsePositiveCounter += counter[0]
-                trueNegativeCounter += counter[1]
+        trueNegativeCounter = 0
+        for counter c in cs:
+            if(c[0] >= 0 and c[1] >= 0)
+                falsePositiveCounter += c[0]
+                trueNegativeCounter += c[1]
 
         if((trueNegativeCounter + falsePositiveCounter) != 0):
             falsePositiveRate = falsePositiveCounter/(trueNegativeCounter + falsePositiveCounter)
@@ -143,22 +144,19 @@ class COMPUTEPARAMSMAPPER
 ```python
 class COMPUTEPARAMSREDUCER
 
-
-    method REDUCE(rating r, rating_counts [c1, c2 ... ck])
-        p = getConfigurationParam("p")
-        k = getConfigurationParam("k")
+    method REDUCE(rating r, rating_counts [c1, c2 ... ck] as rc)
 
         rating_count_sum = 0
-        for rating_count in rating_counts:
-            rating_count_sum += rating_count
+        for rating_count c in rc:
+            rating_count_sum += c
 
         
-        if K = 0:
-            bestM = ceil((rating_count_sum * log(p)) / log(1 / 2**log(2)))
-            bestK = round(log(2)*bestM/rating_count_sum)
+        if no constraints on K :
+            m = computeBestM(rating_count_sum, p)
+            k = computeBestK(rating_count_sum, m)
         else:
-            bestK = k
-            bestM = ceil(-(k*rating_count_sum)/log(1-p**(1/k)))
+            k = constrained_k
+            m = computeBestM(rating_count_sum, p, k)
         
-        emit(r, (r, p, rating_count_sum, bestM, bestK))
+        emit(r, (p, rating_count_sum, m, k))
 ```
