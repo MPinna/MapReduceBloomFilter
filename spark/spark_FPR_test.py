@@ -11,16 +11,6 @@ NUM_OF_ARGS = 5
 PROTOCOL = "hdfs://"
 NUM_OF_RATINGS = 10
 
-#TODO same exact function as the one in spark_bloomfilter_versions.py
-# move it into Utils or leave as it is?
-#LINK ./spark_bloomfilter_versions.py:12
-
-def mapRatingMovie(line: str):
-    line_ = line.split()
-    rating = roundHalfUp(line_[1]) 
-    movieId = line_[0]
-    return (rating, movieId)
-
 def FPR_map(item: tuple):
     bloom_filters_by_rating = {}
     false_positive_count = [0]*NUM_OF_RATINGS
@@ -100,14 +90,6 @@ if __name__== "__main__":
     bloom_filters_list = bloom_filters_rdd.collect()
     bloom_filters_list_br = sc.broadcast(bloom_filters_list)
 
-    # TODO remove test stuff
-    # print(f"[LOG] *************************************\n"*20)
-    # bloom_filters_by_rating = {}    
-    # for line in bloom_filters_list_br.value:
-    #     temp_bloom_filter: BloomFilter = BloomFilter(line.strip())
-    #     print(f"[LOG] temp bloom filter: {temp_bloom_filter}")
-    #     bloom_filters_by_rating[temp_bloom_filter.rating] = temp_bloom_filter
-        
     rdd_input: RDD = sc.textFile(input_file_path)
     
     rows: RDD = rdd_input.filter(removeHeaderAndMalformedRows) 
@@ -116,19 +98,8 @@ if __name__== "__main__":
         
     rows_mapped: RDD = rows_grouped.flatMap(FPR_map)
 
-
-    print(f"[LOG] *************************************\n"*20)
-    print(f"[LOG] rows_mapped: {rows_mapped.collect()}")
     rows_reduced: RDD = rows_mapped.reduceByKey(FPR_reduce)
     
-    
-    print(f"[LOG] *************************************\n"*20)
-    print(f"[LOG] rows_reduced: {rows_reduced.collect()}")
-    
     output_rdd: RDD = rows_reduced.map(get_rate_from_counts)
-
-
-    print(f"[LOG] *************************************\n"*20)
-    print(f"[LOG] output_rdd: {output_rdd.collect()}")
     
     output_rdd.saveAsTextFile(output_file_path)

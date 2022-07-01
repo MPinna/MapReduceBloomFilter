@@ -9,12 +9,6 @@ from util import *
 
 ''' WithBloomFilters functions '''
 
-def mapRatingMovie(line: str):
-    line_ = line.split()
-    rating = roundHalfUp(line_[1]) 
-    movieId = line_[0]
-    return (rating, movieId)
-
 def mapBF(item):    
     rating = item[0]
     movieIds = item[1]
