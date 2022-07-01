@@ -17,8 +17,104 @@ Given a key \textit{$id_{i}$}, every hash function \textit{$h_{1}, ..., h_{k}$} 
 The space efficiency of Bloom filters comes at the cost of having a non-zero probability of false positives. The false positive rate of a Bloom filter is denoted by \textit{p}.\\\
 Therefore the two possible outcomes of the \texttt{test} function of the Bloom filter are ``Possibly in set" or ``Definitely not in set".\\
 
-\section{Algorithm design}
-The general idea of this MapReduce implementation is
+%TODO riformulare
+In this use case, Bloom filters will be used to check whether a movie in the IMDb dataset belongs to the set of movies having a certain average rating.\\
+Movies in the IMDb datasets can be rated by users from 1.0 to 10.0. Rounding the rating to the nearest integer, we have a total of 10 possible ratings.
+A total of 10 Bloom filter will then be built.
 
+\section{Algorithm design}
+The general idea of this MapReduce implementation is to split the IMDb dataset into partitions and have each mapper compute, from the movies contained in one partition, part of the information needed to build the relative final Bloom filters.
+%TODO reducer singolare?
+The reducer(s) will then combine the data received from the mappers and merge it into a total of 10 Bloom filters.\\
+Two different algorithms have been designed for the task: the first one computes the indexes on the mappers and sends them to the reducers which takes care of creating the Bloom filters; the second one creates the Bloom filters on the mappers, fills them partially and lets the reducers merge all the filters into the final 10 Bloom filters.\\
+Let us see these two implementations more in detail:
+
+\subsection{With Indexes}
+\begin{algorithm}
+	\caption{Mapper} 
+	\begin{algorithmic}[1]
+		\Procedure{MapperWithIndexes}{$partition$}
+			\State rating\_1\_indexes $\gets \emptyset$
+			\State rating\_2\_indexes $\gets \emptyset$
+			\State ...
+			\State rating\_10\_indexes $\gets \emptyset$	
+			\For {every line in $partition$}
+				\State ID $\gets$ getMovieID(line)
+				\State r $\gets$ getMovieRating(line)
+				%\For {$h_{i}=h_{1},h_{2},\ldots,h_{K}$}
+				\For {every hash function $h_{i}$}
+					\State index $\gets h_{i}(ID)$	
+					%\For {i=1,2,\ldots ,10}
+					%	\If{movie rating == i}			
+					% TODO brutto, cambiare
+							\State rating\_r\_indexes $\gets$ rating\_r\_indexes $\cup$ index
+					%	\EndIf				
+					%\EndFor
+				\EndFor
+			\EndFor
+			\For{i=1,2,\ldots ,10}
+				\State emit(i, rating\_i\_indexes)
+			\EndFor
+		\EndProcedure
+	\end{algorithmic} 
+\end{algorithm}
+
+\begin{algorithm}
+	\caption{Reducer} 
+	\begin{algorithmic}[1]
+		\Procedure{ReducerWithIndexes}{$rating, indexes$}
+			\State BloomFilter\_1 $\gets \emptyset$
+			\State BloomFilter\_2 $\gets \emptyset$
+			\State ...
+			\State BloomFilter\_10 $\gets \emptyset$	
+			\For {every index in $indexes$}
+				\State set bit at position $index$ in BloomFilter\_rating
+			\EndFor
+			\For{i=1,2,\ldots ,10}
+				\State emit(i, BloomFilter\_i)
+			\EndFor
+		\EndProcedure
+	\end{algorithmic} 
+\end{algorithm}
+
+\subsection{With Bloom Filters}
+
+\begin{algorithm}
+	\caption{Mapper} 
+	\begin{algorithmic}[1]
+		\Procedure{MapperWithBloomFilters}{$partition$}
+			\State BloomFilter\_1 $\gets empty Bloom filter$
+			\State BloomFilter\_2 $\gets empty Bloom filter$
+			\State ...
+			\State BloomFilter\_10 $\gets empty Bloom filter$	
+			\For {every line in $partition$}
+				\State ID $\gets$ getMovieID(line)
+				\State r $\gets$ getMovieRating(line)
+				\State BloomFilter\_r.add(ID)
+			\EndFor
+			\For{i=1,2,\ldots ,10}
+				\State emit(i, BloomFilter\_i)
+			\EndFor
+		\EndProcedure
+	\end{algorithmic} 
+\end{algorithm}
+
+\begin{algorithm}
+	\caption{Reducer} 
+	\begin{algorithmic}[1]
+		\Procedure{ReducerWithBloomFilters}{$rating, bloomFilters$}
+			\State BloomFilter\_1 $\gets \emptyset$
+			\State BloomFilter\_2 $\gets \emptyset$
+			\State ...
+			\State BloomFilter\_10 $\gets \emptyset$	
+			\For {every bloomFilter in $bloomFilters$}
+				\State BloomFilter\_rating $\gets$ BloomFilter\_rating OR bloomFilter
+			\EndFor
+			\For{i=1,2,\ldots ,10}
+				\State emit(i, BloomFilter\_i)
+			\EndFor
+		\EndProcedure
+	\end{algorithmic} 
+\end{algorithm}
 
 %TODO inserire figure
