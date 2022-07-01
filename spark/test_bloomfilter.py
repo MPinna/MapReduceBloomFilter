@@ -113,24 +113,3 @@ FPR = FP/(FP+TN)
 print("FPR (~0.10 expected) " + str(FPR))
 print("FP: " + str(FP))
 print("TN: " + str(TN))
-
-
-#Another test
-
-# bloomFilters = []
-# for i in range(10):
-#     bloomFilters.append(BloomFilter(i+1, 1000, 3, 0.01))
-
-# lines = []
-# lines_formatted = []
-# with open("../dataset/data10000.tsv") as fp:
-#     lines = fp.readlines()
-    
-# # print(lines[1:])
-# for line in lines[1:]:
-#     line_ = line.split()
-#     rating = util.roundHalfUp(line_[1]) 
-#     movieId = line_[0]
-#     lines_formatted.append((rating, movieId))
-    
-# print(lines_formatted[:])

@@ -101,7 +101,7 @@ public class MapRedFalsePositiveRateTest
                 boolean testResult = currBloomFilter.test((String)tokens[0]);
                 if(testResult && (int) movieRating != currBloomFilterRating)
                     false_positive_count[i]++;
-                if(currBloomFilterRating!=movieRating)
+                if(!testResult && (int) movieRating != currBloomFilterRating)
                     true_negative_count[i]++;        
             }   
         }

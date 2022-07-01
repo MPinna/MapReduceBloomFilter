@@ -41,9 +41,9 @@ def FPR_map(item: tuple):
             continue
         for movie_id in movie_ids:
             movie_in_filter = curr_bloom_filter.test(movie_id)
-            if(movie_in_filter and movie_rating != curr_bloom_filter_rating):
+            if(movie_in_filter and curr_bloom_filter_rating != movie_rating):
                 false_positive_count[i] += 1
-            if(curr_bloom_filter_rating != movie_rating):
+            if(not movie_in_filter and curr_bloom_filter_rating != movie_rating):
                 true_negative_count[i] += 1
 
 
