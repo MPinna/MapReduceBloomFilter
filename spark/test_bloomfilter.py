@@ -1,6 +1,7 @@
 from BloomFilter import BloomFilter
 import mmh3
 from bitarray import bitarray
+import util
 
 def printBloomFilter(bloom: BloomFilter):
     print(f"Rating: {bloom.rating}")
@@ -57,7 +58,6 @@ assert bloom2.test("tt000005") == True
 bloom.orBloomFilter(bloom2)
 assert bloom.test("tt000001") == True
 assert bloom.test("tt000005") == True
-# assert bloom.test("asdf") == False
 
 str_bloom = str(bloom)
 printBloomFilter(bloom)
@@ -69,13 +69,68 @@ assert bloom.test("tt000007") == True
 assert bloom.test("tt000008") == True
 assert bloom.test("tt000009") == True
 assert bloom.test("tt000010") == True
-# assert bloom.test("asdf") == False
-printBloomFilter(bloom)
 print("Test Finished Correctly.")
  
- 
-# bloom_filters_list = [str(bloom), str(bloom2)]
-# # printBloomFilter(bloom)
-# print(bloom_filters_list)
-# NUM_OF_RATINGS = 10
-# FPR_map((5, ["f1", "f2", "f3", "f4"]))
+
+
+# n = 4000
+# m = 19000
+# k = 3
+# => p = 0.1
+
+bloom_fpr_test = BloomFilter(1, 19000, 3, 0.1)
+bloom_fpr_test2 = BloomFilter(1, 19000, 3, 0.1)
+
+FP = 0
+TN = 20000
+
+for i in range(2000):
+    bloom_fpr_test.add("test" + str(i))
+for i in range(2000, 4000):
+    bloom_fpr_test2.add("test" + str(i))
+
+bloom_fpr_test = bloom_fpr_test.orBloomFilter(bloom_fpr_test2)
+
+for i in range(4000, 24000):
+    res = bloom_fpr_test.test("test" + str(i))
+    if res:
+        FP += 1
+        
+FPR = FP/(FP+TN)
+print("FPR (~0.10 expected): " + str(FPR))
+print("FP: " + str(FP))
+print("TN: " + str(TN))
+
+
+bloom_fpr_test3 = BloomFilter(json_string=str(bloom_fpr_test))
+
+FP = 0
+for i in range(4000, 24000):
+    res = bloom_fpr_test.test("test" + str(i))
+    if res:
+        FP += 1
+FPR = FP/(FP+TN)
+print("FPR (~0.10 expected) " + str(FPR))
+print("FP: " + str(FP))
+print("TN: " + str(TN))
+
+
+#Another test
+
+# bloomFilters = []
+# for i in range(10):
+#     bloomFilters.append(BloomFilter(i+1, 1000, 3, 0.01))
+
+# lines = []
+# lines_formatted = []
+# with open("../dataset/data10000.tsv") as fp:
+#     lines = fp.readlines()
+    
+# # print(lines[1:])
+# for line in lines[1:]:
+#     line_ = line.split()
+#     rating = util.roundHalfUp(line_[1]) 
+#     movieId = line_[0]
+#     lines_formatted.append((rating, movieId))
+    
+# print(lines_formatted[:])
