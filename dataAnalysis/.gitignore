@@ -1,2 +1,6 @@
-data/
+data/logs
+data/params
 scripts/input
+data/plots/*.png
+data/*txt
+data/*.tsv

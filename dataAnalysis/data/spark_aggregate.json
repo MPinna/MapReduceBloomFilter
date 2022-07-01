@@ -1,0 +1,542 @@
+{
+  "WithBloomFiltersP0.00001K0": {
+    "wallTime": {
+      "avg": 31.45,
+      "max": 32.4,
+      "min": 30.32,
+      "var": 0.3,
+      "std": 0.55
+    }
+  },
+  "WithBloomFiltersP0.00001K3": {
+    "wallTime": {
+      "avg": 49.96,
+      "max": 52.97,
+      "min": 48.24,
+      "var": 2.66,
+      "std": 1.63
+    }
+  },
+  "WithBloomFiltersP0.00001K5": {
+    "wallTime": {
+      "avg": 35.57,
+      "max": 37.72,
+      "min": 33.16,
+      "var": 1.76,
+      "std": 1.33
+    }
+  },
+  "WithBloomFiltersP0.00001K7": {
+    "wallTime": {
+      "avg": 32.42,
+      "max": 33.47,
+      "min": 31.04,
+      "var": 0.85,
+      "std": 0.92
+    }
+  },
+  "WithBloomFiltersP0.00001K9": {
+    "wallTime": {
+      "avg": 32.21,
+      "max": 34.38,
+      "min": 31.18,
+      "var": 1.15,
+      "std": 1.07
+    }
+  },
+  "WithBloomFiltersP0.0001K0": {
+    "wallTime": {
+      "avg": 31.27,
+      "max": 32.53,
+      "min": 29.35,
+      "var": 0.98,
+      "std": 0.99
+    }
+  },
+  "WithBloomFiltersP0.0001K3": {
+    "wallTime": {
+      "avg": 37.82,
+      "max": 39.21,
+      "min": 35.79,
+      "var": 1.26,
+      "std": 1.12
+    }
+  },
+  "WithBloomFiltersP0.0001K5": {
+    "wallTime": {
+      "avg": 32.59,
+      "max": 33.22,
+      "min": 31.74,
+      "var": 0.25,
+      "std": 0.5
+    }
+  },
+  "WithBloomFiltersP0.0001K7": {
+    "wallTime": {
+      "avg": 32.65,
+      "max": 37.99,
+      "min": 30.46,
+      "var": 4.22,
+      "std": 2.05
+    }
+  },
+  "WithBloomFiltersP0.0001K9": {
+    "wallTime": {
+      "avg": 31.96,
+      "max": 34.23,
+      "min": 30.39,
+      "var": 1.28,
+      "std": 1.13
+    }
+  },
+  "WithBloomFiltersP0.001K0": {
+    "wallTime": {
+      "avg": 31.44,
+      "max": 32.9,
+      "min": 29.71,
+      "var": 1.5,
+      "std": 1.23
+    }
+  },
+  "WithBloomFiltersP0.001K3": {
+    "wallTime": {
+      "avg": 33.62,
+      "max": 34.73,
+      "min": 31.72,
+      "var": 1.2,
+      "std": 1.1
+    }
+  },
+  "WithBloomFiltersP0.001K5": {
+    "wallTime": {
+      "avg": 30.57,
+      "max": 31.74,
+      "min": 29.01,
+      "var": 0.76,
+      "std": 0.87
+    }
+  },
+  "WithBloomFiltersP0.001K7": {
+    "wallTime": {
+      "avg": 30.61,
+      "max": 32.76,
+      "min": 29.4,
+      "var": 0.66,
+      "std": 0.81
+    }
+  },
+  "WithBloomFiltersP0.001K9": {
+    "wallTime": {
+      "avg": 30.64,
+      "max": 32.57,
+      "min": 29.2,
+      "var": 1.06,
+      "std": 1.03
+    }
+  },
+  "WithBloomFiltersP0.01K0": {
+    "wallTime": {
+      "avg": 30.42,
+      "max": 33.61,
+      "min": 28.52,
+      "var": 2.01,
+      "std": 1.42
+    }
+  },
+  "WithBloomFiltersP0.01K3": {
+    "wallTime": {
+      "avg": 30.78,
+      "max": 33.32,
+      "min": 29.08,
+      "var": 1.39,
+      "std": 1.18
+    }
+  },
+  "WithBloomFiltersP0.01K5": {
+    "wallTime": {
+      "avg": 29.59,
+      "max": 31.08,
+      "min": 28.23,
+      "var": 0.91,
+      "std": 0.95
+    }
+  },
+  "WithBloomFiltersP0.01K7": {
+    "wallTime": {
+      "avg": 29.52,
+      "max": 30.64,
+      "min": 28.34,
+      "var": 0.69,
+      "std": 0.83
+    }
+  },
+  "WithBloomFiltersP0.01K9": {
+    "wallTime": {
+      "avg": 31.24,
+      "max": 35.14,
+      "min": 28.94,
+      "var": 3.81,
+      "std": 1.95
+    }
+  },
+  "WithBloomFiltersP0.1K0": {
+    "wallTime": {
+      "avg": 28.71,
+      "max": 30.33,
+      "min": 27.35,
+      "var": 0.77,
+      "std": 0.88
+    }
+  },
+  "WithBloomFiltersP0.1K3": {
+    "wallTime": {
+      "avg": 28.83,
+      "max": 30.23,
+      "min": 26.67,
+      "var": 1.36,
+      "std": 1.17
+    }
+  },
+  "WithBloomFiltersP0.1K5": {
+    "wallTime": {
+      "avg": 28.99,
+      "max": 31.35,
+      "min": 28.02,
+      "var": 0.84,
+      "std": 0.92
+    }
+  },
+  "WithBloomFiltersP0.1K7": {
+    "wallTime": {
+      "avg": 30.11,
+      "max": 32.78,
+      "min": 27.13,
+      "var": 2.42,
+      "std": 1.56
+    }
+  },
+  "WithBloomFiltersP0.1K9": {
+    "wallTime": {
+      "avg": 29.59,
+      "max": 30.86,
+      "min": 27.94,
+      "var": 0.96,
+      "std": 0.98
+    }
+  },
+  "WithBloomFiltersP0.001K0MAP4": {
+    "wallTime": {
+      "avg": 30.21,
+      "max": 45.11,
+      "min": 27.39,
+      "var": 25.84,
+      "std": 5.08
+    }
+  },
+  "WithBloomFiltersP0.001K0MAP6": {
+    "wallTime": {
+      "avg": 29.69,
+      "max": 30.43,
+      "min": 28.86,
+      "var": 0.16,
+      "std": 0.4
+    }
+  },
+  "WithBloomFiltersP0.001K0MAP8": {
+    "wallTime": {
+      "avg": 30.66,
+      "max": 32.56,
+      "min": 29.37,
+      "var": 0.83,
+      "std": 0.91
+    }
+  },
+  "WithBloomFiltersP0.001K0MAP10": {
+    "wallTime": {
+      "avg": 33.48,
+      "max": 36.52,
+      "min": 31.16,
+      "var": 2.32,
+      "std": 1.52
+    }
+  },
+  "WithBloomFiltersP0.001K0MAP12": {
+    "wallTime": {
+      "avg": 33.67,
+      "max": 34.78,
+      "min": 32.31,
+      "var": 0.69,
+      "std": 0.83
+    }
+  },
+  "WithIndexesP0.00001K0": {
+    "wallTime": {
+      "avg": 35.98,
+      "max": 36.82,
+      "min": 34.68,
+      "var": 0.45,
+      "std": 0.67
+    }
+  },
+  "WithIndexesP0.00001K3": {
+    "wallTime": {
+      "avg": 47.36,
+      "max": 49.3,
+      "min": 46.01,
+      "var": 1.02,
+      "std": 1.01
+    }
+  },
+  "WithIndexesP0.00001K5": {
+    "wallTime": {
+      "avg": 37.13,
+      "max": 39.89,
+      "min": 35.17,
+      "var": 1.43,
+      "std": 1.2
+    }
+  },
+  "WithIndexesP0.00001K7": {
+    "wallTime": {
+      "avg": 35.54,
+      "max": 37.16,
+      "min": 33.3,
+      "var": 1.53,
+      "std": 1.24
+    }
+  },
+  "WithIndexesP0.00001K9": {
+    "wallTime": {
+      "avg": 34.21,
+      "max": 35.35,
+      "min": 33.04,
+      "var": 0.73,
+      "std": 0.86
+    }
+  },
+  "WithIndexesP0.0001K0": {
+    "wallTime": {
+      "avg": 34.09,
+      "max": 36.46,
+      "min": 32.14,
+      "var": 1.06,
+      "std": 1.03
+    }
+  },
+  "WithIndexesP0.0001K3": {
+    "wallTime": {
+      "avg": 38.71,
+      "max": 40.09,
+      "min": 36.33,
+      "var": 1.44,
+      "std": 1.2
+    }
+  },
+  "WithIndexesP0.0001K5": {
+    "wallTime": {
+      "avg": 34.49,
+      "max": 35.76,
+      "min": 32.44,
+      "var": 0.75,
+      "std": 0.86
+    }
+  },
+  "WithIndexesP0.0001K7": {
+    "wallTime": {
+      "avg": 35.43,
+      "max": 38.85,
+      "min": 34.0,
+      "var": 1.84,
+      "std": 1.36
+    }
+  },
+  "WithIndexesP0.0001K9": {
+    "wallTime": {
+      "avg": 33.88,
+      "max": 36.2,
+      "min": 32.04,
+      "var": 1.62,
+      "std": 1.27
+    }
+  },
+  "WithIndexesP0.001K0": {
+    "wallTime": {
+      "avg": 33.38,
+      "max": 34.83,
+      "min": 31.42,
+      "var": 1.46,
+      "std": 1.21
+    }
+  },
+  "WithIndexesP0.001K3": {
+    "wallTime": {
+      "avg": 35.35,
+      "max": 37.63,
+      "min": 34.01,
+      "var": 1.27,
+      "std": 1.13
+    }
+  },
+  "WithIndexesP0.001K5": {
+    "wallTime": {
+      "avg": 34.15,
+      "max": 35.31,
+      "min": 32.46,
+      "var": 0.91,
+      "std": 0.95
+    }
+  },
+  "WithIndexesP0.001K7": {
+    "wallTime": {
+      "avg": 33.5,
+      "max": 35.45,
+      "min": 32.19,
+      "var": 0.86,
+      "std": 0.93
+    }
+  },
+  "WithIndexesP0.001K9": {
+    "wallTime": {
+      "avg": 33.69,
+      "max": 35.74,
+      "min": 32.29,
+      "var": 1.23,
+      "std": 1.11
+    }
+  },
+  "WithIndexesP0.01K0": {
+    "wallTime": {
+      "avg": 32.25,
+      "max": 33.71,
+      "min": 30.77,
+      "var": 0.72,
+      "std": 0.85
+    }
+  },
+  "WithIndexesP0.01K3": {
+    "wallTime": {
+      "avg": 32.78,
+      "max": 35.96,
+      "min": 31.21,
+      "var": 1.5,
+      "std": 1.22
+    }
+  },
+  "WithIndexesP0.01K5": {
+    "wallTime": {
+      "avg": 32.42,
+      "max": 33.66,
+      "min": 30.14,
+      "var": 1.05,
+      "std": 1.02
+    }
+  },
+  "WithIndexesP0.01K7": {
+    "wallTime": {
+      "avg": 33.37,
+      "max": 35.06,
+      "min": 32.24,
+      "var": 0.87,
+      "std": 0.93
+    }
+  },
+  "WithIndexesP0.01K9": {
+    "wallTime": {
+      "avg": 34.21,
+      "max": 37.41,
+      "min": 32.57,
+      "var": 2.55,
+      "std": 1.6
+    }
+  },
+  "WithIndexesP0.1K0": {
+    "wallTime": {
+      "avg": 33.13,
+      "max": 38.2,
+      "min": 30.34,
+      "var": 4.16,
+      "std": 2.04
+    }
+  },
+  "WithIndexesP0.1K3": {
+    "wallTime": {
+      "avg": 31.64,
+      "max": 32.77,
+      "min": 29.69,
+      "var": 1.16,
+      "std": 1.08
+    }
+  },
+  "WithIndexesP0.1K5": {
+    "wallTime": {
+      "avg": 32.55,
+      "max": 34.08,
+      "min": 30.25,
+      "var": 1.6,
+      "std": 1.26
+    }
+  },
+  "WithIndexesP0.1K7": {
+    "wallTime": {
+      "avg": 31.95,
+      "max": 34.24,
+      "min": 30.11,
+      "var": 1.99,
+      "std": 1.41
+    }
+  },
+  "WithIndexesP0.1K9": {
+    "wallTime": {
+      "avg": 32.83,
+      "max": 34.85,
+      "min": 31.62,
+      "var": 1.01,
+      "std": 1.0
+    }
+  },
+  "WithIndexesP0.001K0MAP4": {
+    "wallTime": {
+      "avg": 31.85,
+      "max": 33.77,
+      "min": 29.55,
+      "var": 1.35,
+      "std": 1.16
+    }
+  },
+  "WithIndexesP0.001K0MAP6": {
+    "wallTime": {
+      "avg": 31.72,
+      "max": 32.68,
+      "min": 30.15,
+      "var": 0.55,
+      "std": 0.74
+    }
+  },
+  "WithIndexesP0.001K0MAP8": {
+    "wallTime": {
+      "avg": 32.69,
+      "max": 34.53,
+      "min": 31.35,
+      "var": 0.95,
+      "std": 0.97
+    }
+  },
+  "WithIndexesP0.001K0MAP10": {
+    "wallTime": {
+      "avg": 34.29,
+      "max": 37.32,
+      "min": 32.02,
+      "var": 2.98,
+      "std": 1.73
+    }
+  },
+  "WithIndexesP0.001K0MAP12": {
+    "wallTime": {
+      "avg": 36.08,
+      "max": 37.8,
+      "min": 34.19,
+      "var": 1.45,
+      "std": 1.21
+    }
+  }
+}
