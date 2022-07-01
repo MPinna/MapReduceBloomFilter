@@ -12,7 +12,7 @@ from util import *
 def mapRatingMovie(line: str):
     line_ = line.split()
     rating = roundHalfUp(line_[1]) 
-    movieId = line_[2]
+    movieId = line_[0]
     return (rating, movieId)
 
 def mapBF(item):    
@@ -34,7 +34,7 @@ def reduce_bloomfilters(bloomfilter_a: BloomFilter, bloomfilter_b: BloomFilter):
 def compute_indexes(line: str):
     line_ = line.split()
     rating = roundHalfUp(line_[1]) 
-    movieId = line_[2]
+    movieId = line_[0]
     indexes = BloomFilter.computeHash(k_br.value, movieId, m_list_br.value[rating-1])
     
     return (rating, indexes)
