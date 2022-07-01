@@ -21,3 +21,10 @@ Check if input row is valid and well formed
 """
 def removeHeaderAndMalformedRows(row:str):
     return True if re.search(ROW_TYPES_REGEX,row) else False
+
+
+def mapRatingMovie(line: str):
+    line_ = line.split()
+    rating = roundHalfUp(line_[1]) 
+    movieId = line_[0]
+    return (rating, movieId)
