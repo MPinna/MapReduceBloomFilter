@@ -11,110 +11,214 @@ Finally, some considerations about the dataset to be used and the use cases of t
 
 \section{Bloom filters}
 A \textit{Bloom filter} is a space-efficient probabilistic data structure that is used for membership testing.\\
-A Bloom filter consists of a bit-vector with \textit{m} elements and \textit{k} hash functions to map \textit{n} keys to the \textit{m} elements of the bit-vector.\\
+A Bloom filter consists of a bit-vector with \colorbox{gray!30}{\large \texttt{m}} elements and \colorbox{gray!30}{\large \texttt{k}} hash functions to map \colorbox{gray!30}{\large \texttt{n}} keys to the \textit{m} elements of the bit-vector.\\
 The two possible operations that can be done on a Bloom filter are \texttt{add} and \texttt{test}.\\
-Given a key \textit{$id_{i}$}, every hash function \textit{$h_{1}, ..., h_{k}$} computes the corresponding output positions and sets the corresponding bit in that position to 1.\\
-The space efficiency of Bloom filters comes at the cost of having a non-zero probability of false positives. The false positive rate of a Bloom filter is denoted by \textit{p}.\\\
+Given a key \textit{$id_{i}$}, every hash function \textit{$h_{1}, ..., h_{k}$} computes the corresponding output positions and sets the bit in that position to 1.\\
+The space efficiency of Bloom filters comes at the cost of having a non-zero probability of false positives. The false positive rate (FPR) of a Bloom filter is denoted by \colorbox{gray!30}{\large \texttt{p}}.\\\
 Therefore the two possible outcomes of the \texttt{test} function of the Bloom filter are ``Possibly in set" or ``Definitely not in set".\\
+\\
+\noindent The relations between \textit{n}, \textit{m}, \textit{k} and \textit{p} are expressed by the following formulas, which can be used to compute the optimal value the Bloom filters parameters:
+
+\begin{equation}\label{eq:parameters}
+m = - \frac{n \ln p}{(\ln 2)^{2}} 
+   \text{,}\quad\quad 
+k = \frac{m}{n} \ln 2
+\text{,}\quad\quad
+p \approx (1-e^{-\frac{kn}{m}})^{k}
+\end{equation}
 
 %TODO riformulare
-In this use case, Bloom filters will be used to check whether a movie in the IMDb dataset belongs to the set of movies having a certain average rating.\\
-Movies in the IMDb datasets can be rated by users from 1.0 to 10.0. Rounding the rating to the nearest integer, we have a total of 10 possible ratings.
-A total of 10 Bloom filter will then be built.
+\noindent In this use case, Bloom filters will be used to check whether a movie in the IMDb dataset belongs to the set of movies having a certain average rating.\\
+Movies in the IMDb datasets can be rated by users from 1.0 to 10.0. Rounding the rating to the nearest integer yields 10 possible ratings.
+A total of 10 Bloom filter will then be built.\\
 
-\section{Algorithm design}
+\noindent A total of three phases were designed for this purpose, each of which is carried out using MapReduce:
+\begin{itemize}
+	\item \textbf{computation of the best parameters} for the filter, (possibly with constraints on the value of \textit{k}): the distribution of movies among the different ratings is not uniform, therefore a different \textit{m} for each of the 10 Bloom filters can be computed, according to how many movie that filter is going to contain;
+	\item \textbf{creation of the Bloom filters}
+	\item \textbf{testing of the Bloom filters}: the Bloom filters created in the previous step are designed with a certain FPR \textit{p}. The testing is used to ensure that the filters do in fact have that FPR.
+\end{itemize}
+
+\section{Algorithms design}
+
+\subsection{Compute parameters}
+This initial phase takes care of counting how many movies belong to each of the 10 rating buckets and computing the optimal parameters to properly size the filters in the next phase; this is done to ensure that the filters have a certain FPR \textit{p} without oversizing the bitArray, which would result in a waste of resources.
+
+\begin{algorithm}[H]
+	\caption{Compute Parameters Mapper} 
+	\begin{algorithmic}[1]
+		\Procedure{ComputeParamsMapper}{$splitId$ a, $split$ s}
+			\State ratingCount $\gets$ new int[NUM\_RATINGS]
+			
+			\For {$movie$ m in $split$ s}
+				\State ratingCount[m.rating - 1] $\gets$ rating\_count[m.rating - 1] + 1
+			\EndFor
+			%TODO MAX_RATING or NUM_RATINGS ?
+			\For{i=1,2,\ldots ,MAX\_RATING}
+				\State emit(i, ratingCount[i-1])
+			\EndFor
+		\EndProcedure
+	\end{algorithmic} 
+\end{algorithm}
+
+\begin{algorithm}[H]
+	\caption{Compute Parameters Reducer} 
+	\begin{algorithmic}[1]
+		\Procedure{ComputeParamsReducer}{$rating$ r, $ratinCounts$ [c1, c2, ...,  $c_{10}$]}
+			\State ratingCountSum $\gets$ 0
+			\For{$ratingCount$ c in $ratingCounts$}
+				\State ratingCountSum $\gets$ ratingCountSum + c
+			\EndFor
+			\If{no constraints on K} \hfill\Comment{passed as input to the script}
+				\State m $\gets$ computeBestM(ratingCountSum, p)
+				\State k $\gets$ computeBestK(ratingCountSum, m)
+			\Else
+				\State k $\gets$ constrainedK
+				\State m $\gets$ computeBestM(ratingCountSum, p, k)
+			\EndIf
+			\State emit(r, (p, ratingCountSum, m, k))
+		\EndProcedure
+	\end{algorithmic} 
+\end{algorithm}
+
+\subsection{Create Bloom filters}
 The general idea of this MapReduce implementation is to split the IMDb dataset into partitions and have each mapper compute, from the movies contained in one partition, part of the information needed to build the relative final Bloom filters.
 %TODO reducer singolare?
 The reducer(s) will then combine the data received from the mappers and merge it into a total of 10 Bloom filters.\\
-Two different algorithms have been designed for the task: the first one computes the indexes on the mappers and sends them to the reducers which takes care of creating the Bloom filters; the second one creates the Bloom filters on the mappers, fills them partially and lets the reducers merge all the filters into the final 10 Bloom filters.\\
+Two different algorithms have been designed for the task: the first one computes the indexes on the mappers and sends them to the reducers which takes care of creating the Bloom filters; the second one creates the Bloom filters on the mapper(s), fills them partially and lets the reducers merge all the filters into the final 10 Bloom filters.\\
+In the second implementation, since every mapper has to instantiate
 Let us see these two implementations more in detail:
 
-\subsection{With Indexes}
-\begin{algorithm}
+
+
+\subsubsection{With Indexes}
+\begin{algorithm}[H]
 	\caption{Mapper} 
 	\begin{algorithmic}[1]
-		\Procedure{MapperWithIndexes}{$partition$}
-			\State rating\_1\_indexes $\gets \emptyset$
-			\State rating\_2\_indexes $\gets \emptyset$
-			\State ...
-			\State rating\_10\_indexes $\gets \emptyset$	
-			\For {every line in $partition$}
-				\State ID $\gets$ getMovieID(line)
-				\State r $\gets$ getMovieRating(line)
-				%\For {$h_{i}=h_{1},h_{2},\ldots,h_{K}$}
-				\For {every hash function $h_{i}$}
-					\State index $\gets h_{i}(ID)$	
-					%\For {i=1,2,\ldots ,10}
-					%	\If{movie rating == i}			
-					% TODO brutto, cambiare
-							\State rating\_r\_indexes $\gets$ rating\_r\_indexes $\cup$ index
-					%	\EndIf				
-					%\EndFor
+		\Procedure{MapperWithIndexes}{$splitId$ a, $split$ s}
+			\For {every $movie$ m in $split$ s}
+				\State rating $\gets$ round(m.rating)
+				\State len $\gets$ getBitArrayLen(rating)
+				\State bitArrayIndexes $\gets$ new Array[k]
+				\For {i=1,2,\ldots ,k}
+					\State bitArrayIndexes[i] $\gets h_{i}$(m.id) $\%$ len
+					\State emit(i, bitArrayIndexes)
 				\EndFor
 			\EndFor
-			\For{i=1,2,\ldots ,10}
-				\State emit(i, rating\_i\_indexes)
-			\EndFor
 		\EndProcedure
 	\end{algorithmic} 
 \end{algorithm}
 
-\begin{algorithm}
+\begin{algorithm}[H]
 	\caption{Reducer} 
 	\begin{algorithmic}[1]
-		\Procedure{ReducerWithIndexes}{$rating, indexes$}
-			\State BloomFilter\_1 $\gets \emptyset$
-			\State BloomFilter\_2 $\gets \emptyset$
-			\State ...
-			\State BloomFilter\_10 $\gets \emptyset$	
-			\For {every index in $indexes$}
-				\State set bit at position $index$ in BloomFilter\_rating
+		\Procedure{ReducerWithIndexes}{$rating$ r, bitIndexes[b1[], b2[],\ldots, bj[]]}
+		\State len $\gets$ getBitArrayLen(rating)
+		\State bloomFilter $\gets$ new BitArray[len]
+		\State bloomFilter.set(allZeros)
+		
+		\For{every $bitIndex$ b in bitIndexes}
+			\For{every $index$ i in b}
+				\State bloomFilter[i] $\gets$ 1
 			\EndFor
-			\For{i=1,2,\ldots ,10}
-				\State emit(i, BloomFilter\_i)
-			\EndFor
+		\EndFor
+		emit(r, bloomFilter)
 		\EndProcedure
 	\end{algorithmic} 
 \end{algorithm}
 
-\subsection{With Bloom Filters}
+\subsubsection{With Bloom Filters}
 
-\begin{algorithm}
+\begin{algorithm}[H]
 	\caption{Mapper} 
 	\begin{algorithmic}[1]
-		\Procedure{MapperWithBloomFilters}{$partition$}
-			\State BloomFilter\_1 $\gets empty Bloom filter$
-			\State BloomFilter\_2 $\gets empty Bloom filter$
-			\State ...
-			\State BloomFilter\_10 $\gets empty Bloom filter$	
-			\For {every line in $partition$}
-				\State ID $\gets$ getMovieID(line)
-				\State r $\gets$ getMovieRating(line)
-				\State BloomFilter\_r.add(ID)
+		\Procedure{MapperWithBloomFilters}{$splitId$ a, $split$ s}
+			\For {i=1,2,\ldots,MAX\_RATING}\hfill \Comment{Create 10 empty Bloom filters}
+				\State len $\gets$ getBitArrayLen(i)
+				\State bloomFilter\_i $\gets$ new BitArray[len]
+				\State bloomFilter\_i.set(allZeros)
 			\EndFor
-			\For{i=1,2,\ldots ,10}
-				\State emit(i, BloomFilter\_i)
+			%TODO check this one to be sure it's correct
+			\For {every $movie$ m in $split s$}
+				\State rating $\gets$ round(m.rating)
+				\State bloomFilter\_i.add(m.id)
+			\EndFor
+			\For{i=1,2,\ldots,MAX\_RATING}
+				\State emit(i, bloomFilter\_i)			
 			\EndFor
 		\EndProcedure
 	\end{algorithmic} 
 \end{algorithm}
 
-\begin{algorithm}
+\begin{algorithm}[H]
 	\caption{Reducer} 
 	\begin{algorithmic}[1]
-		\Procedure{ReducerWithBloomFilters}{$rating, bloomFilters$}
-			\State BloomFilter\_1 $\gets \emptyset$
-			\State BloomFilter\_2 $\gets \emptyset$
-			\State ...
-			\State BloomFilter\_10 $\gets \emptyset$	
-			\For {every bloomFilter in $bloomFilters$}
-				\State BloomFilter\_rating $\gets$ BloomFilter\_rating OR bloomFilter
-			\EndFor
-			\For{i=1,2,\ldots ,10}
-				\State emit(i, BloomFilter\_i)
-			\EndFor
+		\Procedure{ReducerWithBloomFilters}{$rating$ r, $bloomFilters$ [bf1, bf2, ..., bfj]}
+		\State len $\gets$ getBloomFilterLen(r)
+		\State bloomFilterResult $\gets$ new BitArray[len]
+		\State bloomFilterResult.set(allZeros)
+		\For{every bloomFilter bf in bloomFilters}
+			\State bloomFilterResult $\gets$ bitwiseOr(bloomFilterResult, bf)
+		\EndFor
+		\State emit(r, bloomFilterResult)
 		\EndProcedure
 	\end{algorithmic} 
 \end{algorithm}
 
-%TODO inserire figure
+\subsection{Test filters}
+
+\begin{algorithm}[H]
+	\caption{Testing mapper} 
+	\begin{algorithmic}[1]
+		\Procedure{TestMapper}{$splitId$ a, $split$ s}
+			\State savedBloomFilters $\gets$ loadBloomFiltersFromHDFS()
+			\State trueNegativeCount $\gets$ new int[NUM\_OF\_RATINGS]
+        	\State falsePositiveCount $\gets$ new int[NUM\_OF\_RATINGS]
+			\For{every $movie$ m in $split$ s}
+				\State movieRating $\gets$ round(m.rating)
+	        	\For{currentRating in 1,2,\ldots,MAX\_RATING}
+	        		\State bloomFilter $\gets$ savedBloomFilters[currentRating]
+	        		\State testResult = bloomFilter.test(m.id)
+	        		\If{testResult == true and movieRating $\neq$ currentRating}$\gets$ falsePositiveCount + 1
+	        		\EndIf
+	        		\If{testResult == false and movieRating $\neq$ currentRating}$\gets$ trueNegativeCount + 1
+	        		\EndIf
+	        	\EndFor
+	        \EndFor
+	        
+	        \State counter$\gets$ new int[2]
+	        \For{every bloomFilter in savedBloomFilters}
+	        	\State bloomFilterRating $\gets$ bloomFilter.getRating()
+				\State counter[0] $\gets$ falsePositiveCount[bloomFilterRating - 1]
+				\State counter[1] $\gets$ trueNegativeCount[bloomFilterRating - 1]
+				\State emit(bloomFilterRating, counter)
+	        \EndFor
+		\EndProcedure
+	\end{algorithmic} 
+\end{algorithm}
+
+\begin{algorithm}[H]
+	\caption{Testing reducer} 
+	\begin{algorithmic}[1]
+		\Procedure{TestReducer}{$rating$ r, $counters$ [c1[], c2[], ..., cj[]]}
+		\State falsePositiveCounter = 0
+		\State trueNegativeCounter = 0
+		\For{$counter$ c in $counters$}
+			\If{c[0] $\geq$ 0 and c[1] $\geq$ 0}
+				\State falsePositiveCounter $\gets$ falsePositiveCounter  + c[0]
+				\State trueNegativeCounter $\gets$ trueNegativeCounter + c[1]
+			\EndIf
+		\EndFor
+		\If{falsePositiveCounter + trueNegativeCounter $>$ 0}
+			\State FPR $\gets$ falsePositiveCounter/(falsePositiveCounter + trueNegativeCounter)
+			\State emit(r, FPR)
+		\EndIf
+		\EndProcedure
+	\end{algorithmic} 
+\end{algorithm}
+
+%TODO rename section?
+\section{Considerations and hypotheses}
+%TODO remove? What else to write?
+The IMDb dataset consists of a .tsv file with approximately 1200000 movies, one per row.\\
+Although the IMDb dataset is updated daily, it was assumed that the Bloom filters to be designed are thought to be used with a constant dataset. 
