@@ -6,3 +6,45 @@
 %         Created on 14/06/2022
 %-------------------------------------------------------------------------------
 \chapter{Spark}\label{ch:spark}
+The second version was implemented in Python, using the Spark framework.\\
+The directory structure of the project is the following:\\
+\dirtree{%
+.1 hadoop.
+.2 spark.
+.3 BloomFilter.py.
+.3 spark\_compute\_params.py.
+.3 spark\_bloomfilter.py.
+.3 spark\_FPR\_test.py.
+.3 util.py.
+}
+\hfill \break
+The files organization is quite similar to the one used in Hadoop, with the same classes used for the same purposes.\\
+The hash function family is again MurmurHash, an implementation of which can be found in the \texttt{mmh3} Python module.\\
+There was no need for a Python equivalent of the Java \texttt{NLineInputFormat} class: the \texttt{SparkContext} class available in the \texttt{pyspark} Python module already has partition size handling built-in within the \texttt{textFile()} method, which simply takes the number of partitions as additional argument when instantiating the first resilient distributed dataset (\textit{RDD}).
+
+%TODO add something about the broadcasts?
+
+\subsection*{Usage}
+The three \texttt{spark\_*} files can be run with the following commands:\\
+
+\begin{lstlisting}[basicstyle=\ttfamily\footnotesize, breaklines=true, backgroundcolor = \color{lightgray}]
+spark-submit spark_compute_params.py yarn hadoop-namenode 9820 title.ratings.tsv output 0.01
+\end{lstlisting}
+\hfill \break
+\texttt{yarn} is the \textit{master} argument that selects on which FS the script has to be run, \texttt{hadoop-\\namenode} is the hostname, \texttt{9820} is the port, \texttt{title.ratings.tsv} is the name of the output file and \texttt{0.01} is the desired value for the FPR \textit{p}.
+\vspace{5pt}
+\hrule
+\vspace{6pt}
+\begin{lstlisting}[basicstyle=\ttfamily\footnotesize,breaklines=true, backgroundcolor = \color{lightgray}]
+spark-submit --archives pyspark_venv.tar.gz#environment spark_bloomfilter.py yarn hadoop-namenode 9820 title.ratings.tsv output 8 24404 63482 171928 420900 990060 2117062 3578304 3406703 1092505 156103 7 0.01 WithBloomFilters
+\end{lstlisting}
+\hfill \break
+\texttt{title.ratings.tsv} is the input file, \texttt{output} is the name of the output file, \texttt{8} is the number of partition the dataset has to be split into, the ten numbers that follow are the values for \textit{m} for each filter, \texttt{7} is the value for \textit{k} and \texttt{WithBloomFilters} is a flag that toggles which of the two implementations is to be run.
+\vspace{5pt}
+\hrule
+\vspace{6pt}
+\begin{lstlisting}[basicstyle=\ttfamily\footnotesize, breaklines=true, backgroundcolor = \color{lightgray}]
+spark-submit --archives pyspark_venv.tar.gz#environment spark_FPR_test.py yarn hadoop-namenode 9820 title.ratings.tsv testOutput output/part-00000
+\end{lstlisting}
+\hfill \break
+\texttt{yarn} is the \textit{master } argument that selects on which FS the script has to be run, \texttt{hadoop-namenode} is the hostname, \texttt{9820} is the port, \texttt{title.ratings.tsv} is the name of the output file, \texttt{testOutput} is the name of the output file, \texttt{output/part-r-00000} is the file from which the saved Bloom filters have to be read.

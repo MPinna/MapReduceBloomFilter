@@ -6,7 +6,7 @@
 %         Created on 14/06/2022
 %-------------------------------------------------------------------------------
 \chapter{Overview and design choices}\label{ch:design}
-In this chapter we firstly present a brief overview of what Bloom filters are (partly taken from the project specifications); then we show the general algorithm, with two possible implementation along with their respective pseudo-code, together with design choices and hypotheses that have been made during the design process.\\
+In this chapter we firstly present a brief overview of what Bloom filters are (partly taken from the project specifications); then we show the general algorithm, with two possible implementations along with their respective pseudo-code, together with design choices and hypotheses that have been made during the design process.\\
 Finally, some considerations about the dataset to be used and the use cases of the Bloom filter are made.\\
 
 \section{Bloom filters}
@@ -30,7 +30,7 @@ p \approx (1-e^{-\frac{kn}{m}})^{k}
 %TODO riformulare
 \noindent In this use case, Bloom filters will be used to check whether a movie in the IMDb dataset belongs to the set of movies having a certain average rating.\\
 Movies in the IMDb datasets can be rated by users from 1.0 to 10.0. Rounding the rating to the nearest integer yields 10 possible ratings.
-A total of 10 Bloom filter will then be built.\\
+A total of 10 Bloom filters will then be built.\\
 
 \noindent A total of three phases were designed for this purpose, each of which is carried out using MapReduce:
 \begin{itemize}
@@ -122,7 +122,7 @@ Let us see these two implementations more in detail:
 				\State bloomFilter[i] $\gets$ 1
 			\EndFor
 		\EndFor
-		emit(r, bloomFilter)
+		\State emit(r, bloomFilter)
 		\EndProcedure
 	\end{algorithmic} 
 \end{algorithm}
@@ -179,9 +179,11 @@ Let us see these two implementations more in detail:
 	        	\For{currentRating in 1,2,\ldots,MAX\_RATING}
 	        		\State bloomFilter $\gets$ savedBloomFilters[currentRating]
 	        		\State testResult = bloomFilter.test(m.id)
-	        		\If{testResult == true and movieRating $\neq$ currentRating}$\gets$ falsePositiveCount + 1
+	        		\If{testResult == true and movieRating $\neq$ currentRating}
+	        			\State falsePositiveCount $\gets$ falsePositiveCount + 1
 	        		\EndIf
-	        		\If{testResult == false and movieRating $\neq$ currentRating}$\gets$ trueNegativeCount + 1
+	        		\If{testResult == false and movieRating $\neq$ currentRating}
+	        			\State trueNegativeCount $\gets$ trueNegativeCount + 1
 	        		\EndIf
 	        	\EndFor
 	        \EndFor

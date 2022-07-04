@@ -6,8 +6,8 @@
 %         Created on 14/06/2022
 %-------------------------------------------------------------------------------
 \chapter{Hadoop}\label{ch:hadoop}
-The first version to be implemented in Java, using the Hadoop framework.\\
-The folder structure of the project is the following:\\
+The first version was implemented in Java, using the Hadoop framework.\\
+The directory structure of the project is the following:\\
 \dirtree{%
 .1 hadoop.
 .2 main/java/it/unipi/hadoop.
@@ -21,30 +21,38 @@ The folder structure of the project is the following:\\
 \begin{itemize}
 \item The \texttt{BloomFilter.java} class contains the implementation the Bloom filter.\\
 The \textit{bitArray} structure of the Bloom filter was realized by using the \texttt{BitSet} class available in the \texttt{java.util.BitSet} Java library. It already comes with built-in methods for setting/resetting all the bits, performing bit-wise operations on it and serializing/deserializing the array.
-The family of hash functions that was used --- as requested in the specifications --- is the MurmurHash, which can be found in the \texttt{org.apache.hadoop.util.hash.MurmurHash} Java library.\\
+The family of hash functions that was used --- as requested in the specifications --- is the MurmurHash, which can be found in the \texttt{org.apache.hadoop.util.hash.MurmurHash} Java library\footnote{text for footnote}.\\
 \item The \texttt{MapRedComputeParams.java} class is used to compute the optimal filter parameters according to the constraints passed as input via command line.\\
 \item The \texttt{MapRedBloomFilter.java} is the main class that contains all the MapReduce logic for the creation of the Bloom filters. It contains both the versions of the algorithm: the one \textit{withIndexes} and the one \textit{withBloomFilters}. One can toggle between the two by simply changing one command line argument when launching the program on the cluster.\\
 \item The \texttt{MapRedFalsePositiveRate.java} is used to test the Bloom filters created by the previous class and check if the empirical FPR is actually consistent with the theoretical one that was yielded by \texttt{MapRedComputeParams.java} and used by \texttt{MapRedBloomFilter.java}.\\
 \item The \texttt{Util.java} class contains constants and utility functions that are used in the rest of the code, such as the ones for parsing and splitting the input rows.\\
 \end{itemize}
+
+In the implementation of all the MapReduce classes, \texttt{setup()} and \texttt{cleanup()} methods were used: \texttt{setup()} to fetch the necessary parameters and initialize the data structures and \texttt{cleanup()} to emit the data collected during the previous elaborations.
 \hfill \break
-All the \texttt{MapRed*} classes take as command line argument --- among the other parameters --- the size of the split to be given as input to each mappers (i.e. the \texttt{num\_lines\_per\_split} argument); this parameter directly controls the number of mappers that are instantiate during the Map phase. To do this, the \texttt{NLineInputFormat} class was used, as required by the specification, which can be found in the \texttt{org.apache.hadoop.mapreduce.lib.input.\\NLineInputFormat} Java library.\\
+All the \texttt{MapRed*} classes take, as command line argument --- among the other parameters, the size of the split to be given as input to each mappers (i.e. the \texttt{num\_lines\_per\_split} argument); this parameter directly controls the number of mappers that are instantiated during the Map phase. To do this, the \texttt{NLineInputFormat} class was used, as required by the specifications, which can be found in the \texttt{org.apache.hadoop.mapreduce.lib.input.\\NLineInputFormat} Java library.\\
 \hfill \break
+
+\subsection*{Usage}\label{sub:usage}
 The three \texttt{MapRed*} classes can be run with the following commands:\\
 
-\begin{lstlisting}[language=Bash, breaklines=true, backgroundcolor = \color{lightgray}]
+\begin{lstlisting}[basicstyle=\ttfamily\footnotesize, breaklines=true, backgroundcolor = \color{lightgray}]
 hadoop jar it/unipi/hadoop/BloomFilter/1.0/BloomFilter-1.0.jar it.unipi.hadoop.MapRedComputeParams title.ratings.tsv output 0.01 157000
 \end{lstlisting}
 \hfill \break
-\texttt{title.ratings.tsv} is the input file, \texttt{output} is the name of the output file \texttt{0.01} is the desired value for the \textit{p} and \texttt{157000} is the size of the partition to be handled to each mapper.
-
-\begin{lstlisting}[language=Bash, breaklines=true, backgroundcolor = \color{lightgray}]
+\texttt{title.ratings.tsv} is the input file, \texttt{output} is the name of the output file, \texttt{0.01} is the desired value for the FPR \textit{p} and \texttt{157000} is the size of the partition to be handled to each mapper. The reason why the partition size was chosen to be 157000 will be explained in chapter \ref{ch:performance}.
+\vspace{5pt}
+\hrule
+\vspace{6pt}
+\begin{lstlisting}[basicstyle=\ttfamily\footnotesize, breaklines=true, backgroundcolor = \color{lightgray}]
 hadoop jar it/unipi/hadoop/BloomFilter/1.0/BloomFilter-1.0.jar it.unipi.hadoop.MapRedBloomFilter title.ratings.tsv output 157000 24404 63482 171928 420900 990060 2117062 3578304 3406703 1092505 156103 7 WithBloomFilters
 \end{lstlisting}
 \hfill \break
 \texttt{title.ratings.tsv} is the input file, \texttt{output} is the name of the output file, \texttt{157000} is the size of the partition to be handled to each mapper, the ten numbers that follow are the values for \textit{m} for each filter, \texttt{7} is the value for \textit{k} and \texttt{WithBloomFilters} is a flag that toggles which of the two implementations is to be run.
-
-\begin{lstlisting}[language=Bash, breaklines=true, backgroundcolor = \color{lightgray}]
+\vspace{5pt}
+\hrule
+\vspace{6pt}
+\begin{lstlisting}[basicstyle=\ttfamily\footnotesize, breaklines=true, backgroundcolor = \color{lightgray}]
 hadoop jar it/unipi/hadoop/BloomFilter/1.0/BloomFilter-1.0.jar it.unipi.hadoop.MapRedFalsePositiveRateTest title.ratings.tsv testOutput 157000 output/part-r-00000 hadoop-namenode 9820
 \end{lstlisting}
 \hfill \break
