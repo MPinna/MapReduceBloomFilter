@@ -58,4 +58,36 @@ hadoop jar it/unipi/hadoop/BloomFilter/1.0/BloomFilter-1.0.jar it.unipi.hadoop.M
 \hfill \break
 \texttt{title.ratings.tsv} is the input file, \texttt{testOutput} is the name of the output file, \texttt{157000} is the size of the partition to be handled to each mapper, \texttt{output/part-r-00000} is the file from which the saved Bloom filters have to be read, \texttt{hadoop-namenode} is the host and \texttt{9820} is the port.\\
 \hfill \break
-The decision to set the partition size to 157000 was taken following the best-practice of assigning 1-1.5 cores to each mapper process; since the cluster that was used for testing had a total of 8 cores and the dataset had approximately 1.2M lines, 157000 was a suitable size for each partition. A more in-depth analysis on this parameter and its effects on the Key Performance Indexes is carried out in chapter \ref{ch:performance}.
+The decision to set the partition size to 157000 was taken following the best-practice of assigning 1-1.5 cores to each mapper process; since the cluster that was used for testing had a total of 8 cores and the dataset had approximately 1.2M lines, 157000 was a suitable size for each partition. A more in-depth analysis on this parameter and its effects on the Key Performance Indexes is carried out in chapter \ref{ch:performance}.\\
+\subsection*{Test}\label{sub:testHadoop}
+The BloomFilters were tested in order to obtain a \textbf{false positive rate of 0.01}. The results are the following:\\
+
+\renewcommand{\arraystretch}{1.5}
+\begin{center}
+	\begin{tabular}{|c | r | r | c | c |} 
+		\hline
+		\textbf{Bloomfilter Index} & \multicolumn{1}{c|}{\textbf{n}} & \multicolumn{1}{c|}{\textbf{m}} & \textbf{k} & \textbf{p} \\ 
+		\hline
+		1 & 2546 & 24404 & 7 & 0.0097\\ 
+		\hline
+		2 & 6623 & 63482 & 7 & 0.0101\\
+		\hline
+		3 & 17937 & 171928 & 7 & 0.0101 \\
+		\hline
+		4 & 43912 & 420900 & 7 & 0.0102\\
+		\hline
+		5 & 103292 & 990060 & 7 & 0.0101\\
+		\hline
+		6 & 220871 & 2117062 & 7 & 0.0100 \\ 
+		\hline
+		7 & 373321 & 3578304 & 7 & 0.0102\\ 
+		\hline
+		8 & 355416 & 3406684 & 7 & 0.0100\\ 
+		\hline
+		9 & 113980 & 1092505 & 7 & 0.0102\\ 
+		\hline
+		10 & 16286 & 156103 & 7 & 0.0101\\ 
+		\hline
+	\end{tabular}
+\end{center}
+

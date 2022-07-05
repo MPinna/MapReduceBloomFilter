@@ -48,3 +48,35 @@ spark-submit --archives pyspark_venv.tar.gz#environment spark_FPR_test.py yarn h
 \end{lstlisting}
 \hfill \break
 \texttt{yarn} is the \textit{master } argument that selects on which FS the script has to be run, \texttt{hadoop-namenode} is the hostname, \texttt{9820} is the port, \texttt{title.ratings.tsv} is the name of the output file, \texttt{testOutput} is the name of the output file, \texttt{output/part-r-00000} is the file from which the saved Bloom filters have to be read.
+
+\subsection{Test}\label{sub:testSpark}
+The BloomFilters were tested in order to obtain a \textbf{false positive rate of 0.01}. The results are the following:\\
+
+\renewcommand{\arraystretch}{1.5}
+\begin{center}
+	\begin{tabular}{|c | r | r | c | c |} 
+		\hline
+		\textbf{Bloomfilter Index} & \multicolumn{1}{c|}{\textbf{n}} & \multicolumn{1}{c|}{\textbf{m}} & \textbf{k} & \textbf{p} \\ 
+		\hline
+		1 & 2546 & 24404 & 7 & 0.0101\\ 
+		\hline
+		2 & 6623 & 63482 & 7 & 0.0105\\
+		\hline
+		3 & 17937 & 171928 & 7 & 0.0101 \\
+		\hline
+		4 & 43912 & 420900 & 7 & 0.0101\\
+		\hline
+		5 & 103292 & 990060 & 7 & 0.0101\\
+		\hline
+		6 & 220871 & 2117062 & 7 & 0.0101 \\ 
+		\hline
+		7 & 373321 & 3578304 & 7 & 0.0101\\ 
+		\hline
+		8 & 355415 & 3406674 & 7 & 0.0101\\ 
+		\hline
+		9 & 113980 & 1092505 & 7 & 0.0100\\ 
+		\hline
+		10 & 16286 & 156103 & 7 & 0.0100\\ 
+		\hline
+	\end{tabular}
+\end{center}
