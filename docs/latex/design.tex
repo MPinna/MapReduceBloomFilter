@@ -9,7 +9,7 @@
 In this chapter we firstly present a brief overview of what Bloom filters are (partly taken from the project specifications); then we show the general algorithm, with two possible implementations along with their respective pseudo-code, together with design choices and hypotheses that have been made during the design process.\\
 Finally, some considerations about the dataset to be used and the use cases of the Bloom filter are made.\\
 
-\section{Bloom filters}
+\section{Bloom filters}\label{sec:bloom_filters}
 A \textit{Bloom filter} is a space-efficient probabilistic data structure that is used for membership testing.\\
 A Bloom filter consists of a bit-vector with \colorbox{gray!30}{\large \texttt{m}} elements and \colorbox{gray!30}{\large \texttt{k}} hash functions to map \colorbox{gray!30}{\large \texttt{n}} keys to the \textit{m} elements of the bit-vector.\\
 The two possible operations that can be done on a Bloom filter are \texttt{add} and \texttt{test}.\\
@@ -86,7 +86,7 @@ The general idea of this MapReduce implementation is to split the IMDb dataset i
 %TODO reducer singolare?
 The reducer(s) will then combine the data received from the mappers and merge it into a total of 10 Bloom filters.\\
 Two different algorithms have been designed for the task: the first one computes the indexes on the mappers and sends them to the reducers which takes care of creating the Bloom filters; the second one creates the Bloom filters on the mapper(s), fills them partially and lets the reducers merge all the filters into the final 10 Bloom filters.\\
-In the second implementation, since every mapper has to instantiate
+%TODO add hypotheses on what performance we expected from the two
 Let us see these two implementations more in detail:
 
 
@@ -223,4 +223,4 @@ Let us see these two implementations more in detail:
 \section{Considerations and hypotheses}
 %TODO remove? What else to write?
 The IMDb dataset consists of a .tsv file with approximately 1200000 movies, one per row.\\
-Although the IMDb dataset is updated daily, it was assumed that the Bloom filters to be designed are thought to be used with a constant dataset. 
+Although the IMDb dataset is updated daily, it was assumed that the Bloom filters are to be used with a fixed dataset. 

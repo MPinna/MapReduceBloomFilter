@@ -21,7 +21,7 @@ The directory structure of the project is the following:\\
 \begin{itemize}
 \item The \texttt{BloomFilter.java} class contains the implementation the Bloom filter.\\
 The \textit{bitArray} structure of the Bloom filter was realized by using the \texttt{BitSet} class available in the \texttt{java.util.BitSet} Java library. It already comes with built-in methods for setting/resetting all the bits, performing bit-wise operations on it and serializing/deserializing the array.
-The family of hash functions that was used --- as requested in the specifications --- is the MurmurHash, which can be found in the \texttt{org.apache.hadoop.util.hash.MurmurHash} Java library\footnote{text for footnote}.\\
+The family of hash functions that was used --- as requested in the specifications --- is MurmurHash, which can be found in the \texttt{org.apache.hadoop.util.hash.MurmurHash} Java library.\\
 \item The \texttt{MapRedComputeParams.java} class is used to compute the optimal filter parameters according to the constraints passed as input via command line.\\
 \item The \texttt{MapRedBloomFilter.java} is the main class that contains all the MapReduce logic for the creation of the Bloom filters. It contains both the versions of the algorithm: the one \textit{withIndexes} and the one \textit{withBloomFilters}. One can toggle between the two by simply changing one command line argument when launching the program on the cluster.\\
 \item The \texttt{MapRedFalsePositiveRate.java} is used to test the Bloom filters created by the previous class and check if the empirical FPR is actually consistent with the theoretical one that was yielded by \texttt{MapRedComputeParams.java} and used by \texttt{MapRedBloomFilter.java}.\\
@@ -40,7 +40,7 @@ The three \texttt{MapRed*} classes can be run with the following commands:\\
 hadoop jar it/unipi/hadoop/BloomFilter/1.0/BloomFilter-1.0.jar it.unipi.hadoop.MapRedComputeParams title.ratings.tsv output 0.01 157000
 \end{lstlisting}
 \hfill \break
-\texttt{title.ratings.tsv} is the input file, \texttt{output} is the name of the output file, \texttt{0.01} is the desired value for the FPR \textit{p} and \texttt{157000} is the size of the partition to be handled to each mapper. The reason why the partition size was chosen to be 157000 will be explained in chapter \ref{ch:performance}.
+\texttt{title.ratings.tsv} is the input file, \texttt{output} is the name of the output file, \texttt{0.01} is the desired value for the FPR \textit{p} and \texttt{157000} is the size of the partition to be handled to each mapper.
 \vspace{5pt}
 \hrule
 \vspace{6pt}
@@ -56,4 +56,6 @@ hadoop jar it/unipi/hadoop/BloomFilter/1.0/BloomFilter-1.0.jar it.unipi.hadoop.M
 hadoop jar it/unipi/hadoop/BloomFilter/1.0/BloomFilter-1.0.jar it.unipi.hadoop.MapRedFalsePositiveRateTest title.ratings.tsv testOutput 157000 output/part-r-00000 hadoop-namenode 9820
 \end{lstlisting}
 \hfill \break
-\texttt{title.ratings.tsv} is the input file, \texttt{testOutput} is the name of the output file, \texttt{157000} is the size of the partition to be handled to each mapper, \texttt{output/part-r-00000} is the file from which the saved Bloom filters have to be read, \texttt{hadoop-namenode} is the host and \texttt{9820} is the port.
+\texttt{title.ratings.tsv} is the input file, \texttt{testOutput} is the name of the output file, \texttt{157000} is the size of the partition to be handled to each mapper, \texttt{output/part-r-00000} is the file from which the saved Bloom filters have to be read, \texttt{hadoop-namenode} is the host and \texttt{9820} is the port.\\
+\hfill \break
+The decision to set the partition size to 157000 was taken following the best-practice of assigning 1-1.5 cores to each mapper process; since the cluster that was used for testing had a total of 8 cores and the dataset had approximately 1.2M lines, 157000 was a suitable size for each partition. A more in-depth analysis on this parameter and its effects on the Key Performance Indexes is carried out in chapter \ref{ch:performance}.
