@@ -22,7 +22,6 @@ The files organization is quite similar to the one used in Hadoop, with the same
 The hash function family is again MurmurHash, an implementation of which can be found in the \texttt{mmh3} Python module.\\
 There was no need for a Python equivalent of the Java \texttt{NLineInputFormat} class: the \texttt{SparkContext} class available in the \texttt{pyspark} Python module already has partition size handling built-in within the \texttt{textFile()} method, which simply takes the number of partitions as additional argument when instantiating the first resilient distributed dataset (\textit{RDD}).
 
-%TODO add something about the broadcasts?
 
 \subsection*{Usage}
 The three \texttt{spark\_*} files can be run with the following commands:\\

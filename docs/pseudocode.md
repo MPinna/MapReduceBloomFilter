@@ -8,7 +8,6 @@ class BLOOMFILTERMAPPER
 
         for all movie m in split s:
             rating <- round(m.rating)
-            id <- m.id
             len <- getBitArrayLen(rating)
             bitArrayIndexes <- new Array[k]
              
