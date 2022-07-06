@@ -48,7 +48,7 @@ spark-submit --archives pyspark_venv.tar.gz#environment spark_FPR_test.py yarn h
 \hfill \break
 \texttt{yarn} is the \textit{master } argument that selects on which FS the script has to be run, \texttt{hadoop-namenode} is the hostname, \texttt{9820} is the port, \texttt{title.ratings.tsv} is the name of the output file, \texttt{testOutput} is the name of the output file, \texttt{output/part-r-00000} is the file from which the saved Bloom filters have to be read.
 
-\subsection{Test}\label{sub:testSpark}
+\subsection*{Test}\label{sub:testSpark}
 The BloomFilters were tested in order to obtain a \textbf{false positive rate of 0.01}. The results are the following:\\
 
 \renewcommand{\arraystretch}{1.5}

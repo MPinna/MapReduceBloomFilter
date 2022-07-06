@@ -39,7 +39,7 @@ Figure \ref{fig:MapOutputBytesP} shows the amount of bytes sent by the mappers t
 \end{figure}
 
 \noindent As it stands out from the red lines, the amount of bytes produced by the mappers in the \textit{withIndexes} implementation does not depend on \textit{p}, but it only increases with \texttt{k}. This makes complete sense since, regardless of the size \texttt{m} of the Bloom filter, the number of indexes is always equal to \texttt{k}. Although the two values of \texttt{k} considered in the plot have a ratio of 3, the same ratio is not preserved in the values of the red line: this is probably due to some overhead bytes added by the serialization process of the objects and network communication.\\
-On the other hand, in the \textit{withBloomFilters} implementation, the amount of bytes sent by the mappers increases as \texttt{p} decreases, as it can be seen especially for lower values of \texttt{k} (light green plot in the figure). This is consistent with the first formula in \ref{eq:parameters}.
+On the other hand, in the \textit{withBloomFilters} implementation, the amount of bytes sent by the mappers increases as \texttt{p} decreases, as it can be seen especially for lower values of \texttt{k} (light green plot in the figure).
 
 \subsection*{Map output bytes as function of \textit{p} with optimal \textit{k}}
 
